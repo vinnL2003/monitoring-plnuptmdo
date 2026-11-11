@@ -1,0 +1,13 @@
+# Railway Nixpacks Configuration for Laravel (PLN UPT Manado)
+[variables]
+NIXPACKS_PHP_ROOT_DIR = "/public"
+
+[phases.build]
+cmds = [
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    "php artisan config:clear",
+    "php artisan view:clear"
+]
+
+[start]
+cmd = "php artisan migrate --force --seed && php artisan optimize && php-fpm -D && nginx -g 'daemon off;'"

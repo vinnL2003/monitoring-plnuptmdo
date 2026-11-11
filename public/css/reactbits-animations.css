@@ -1,0 +1,293 @@
+/**
+ * ReactBits Animations Suite for PLN UPT Manado
+ * Optimized for buttery-smooth 60fps performance (GPU accelerated)
+ * Features:
+ * 1. Spotlight Card (Mouse-following radial border & background glow)
+ * 2. 3D Tilt Card (Subtle perspective tilt on hover)
+ * 3. Magnet Buttons (Tactile magnetic button hover)
+ * 4. Shiny Text / Shimmer Badges
+ * 5. Modern Page Dropdown / Slide-Down Entrance & Exit Transitions
+ * 6. Calculated Number Animations (Count-up ticker with calculation phase)
+ */
+
+/* ===== 1. SPOTLIGHT CARD (React Bits "Spotlight Card") ===== */
+.rb-spotlight-card,
+.card,
+.asset-stat-card,
+.aset-metric-card,
+.ultg-card,
+.summary-card,
+.login-box,
+.page-login-box,
+.card-box {
+  position: relative;
+  isolation: isolate;
+  will-change: transform;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+}
+
+/* Spotlight radial highlight */
+.rb-spotlight-card::before,
+.card::before,
+.asset-stat-card::before,
+.aset-metric-card::before,
+.ultg-card::before,
+.summary-card::before,
+.login-box::before,
+.page-login-box::before,
+.card-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    280px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+    rgba(0, 163, 224, 0.12),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+[data-theme="dark"] .rb-spotlight-card::before,
+[data-theme="dark"] .card::before,
+[data-theme="dark"] .asset-stat-card::before,
+[data-theme="dark"] .aset-metric-card::before,
+[data-theme="dark"] .ultg-card::before,
+[data-theme="dark"] .summary-card::before,
+[data-theme="dark"] .login-box::before,
+[data-theme="dark"] .page-login-box::before,
+[data-theme="dark"] .card-box::before {
+  background: radial-gradient(
+    280px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+    rgba(255, 199, 44, 0.14),
+    transparent 70%
+  );
+}
+
+.rb-spotlight-card:hover::before,
+.card:hover::before,
+.asset-stat-card:hover::before,
+.aset-metric-card:hover::before,
+.ultg-card:hover::before,
+.summary-card:hover::before,
+.login-box:hover::before,
+.page-login-box:hover::before,
+.card-box:hover::before {
+  opacity: 1;
+}
+
+/* Keep content above spotlight glow */
+.card > *,
+.asset-stat-card > *,
+.aset-metric-card > *,
+.ultg-card > *,
+.summary-card > *,
+.login-box > *,
+.page-login-box > *,
+.card-box > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== 2. 3D TILT CARD (React Bits "Tilted Card") ===== */
+.rb-tilt {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rb-tilt:hover {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(6px);
+}
+
+/* ===== 3. MAGNET (React Bits "Magnet") ===== */
+.rb-magnet,
+.theme-toggle-btn,
+.admin-badge-btn,
+#btnLockUnivPage,
+#btnLockAnggaran,
+.btn-detail-link,
+.mode-switch-btn {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ===== 4. SHINY TEXT / SHIMMER EFFECT (React Bits "Shiny Text") ===== */
+@keyframes rbShinySweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.rb-shiny-text {
+  background: linear-gradient(
+    110deg,
+    currentColor 35%,
+    rgba(255, 199, 44, 0.95) 50%,
+    currentColor 65%
+  );
+  background-size: 200% auto;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  animation: rbShinySweep 4.5s ease-in-out infinite;
+}
+
+/* Shimmer pulse for live badge */
+.status-badge {
+  position: relative;
+  overflow: hidden;
+}
+.status-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  animation: rbShimmerBadge 4.5s infinite;
+}
+@keyframes rbShimmerBadge {
+  0%, 65% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ===== 5. MODERN PAGE DROPDOWN / SLIDE-DOWN TRANSITIONS ===== */
+@keyframes rbPageDropdownIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -32px, 0);
+  }
+  65% {
+    opacity: 0.98;
+    transform: translate3d(0, 2px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rbSectionDropdownIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Page content dropdown entrance */
+#pageAppWrapper > .container,
+#pageAppWrapper > main,
+.page-layout > main,
+body > main,
+.rb-dropdown-enter {
+  animation: rbPageDropdownIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Cascading sections dropdown */
+.asset-cards-row,
+.aset-metrics-grid,
+.grid-3,
+.kpi-row,
+.kku-metrics-grid,
+.kp-metrics-grid,
+.summary-cards-row,
+.ahi-summary-row,
+.ce-stat-grid,
+.summary-grid,
+.fois-total-grid,
+.fois-8col,
+.fois-3col,
+.fois-2col,
+.fois-4col,
+.scurve-wrap {
+  animation: rbSectionDropdownIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.08s;
+}
+
+/* Page exit dropdown */
+.rb-page-exit #pageAppWrapper > .container,
+.rb-page-exit #pageAppWrapper > main,
+.rb-page-exit .page-layout > main,
+.rb-page-exit main {
+  opacity: 0 !important;
+  transform: translate3d(0, 18px, 0) scale(0.99) !important;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 1, 1) !important;
+  pointer-events: none !important;
+}
+
+/* ===== 6. CALCULATED NUMBER ANIMATIONS (CALCULATION TICKER & COUNT-UP) ===== */
+.rb-calculating {
+  display: inline-block;
+  color: #00A3E0 !important;
+  text-shadow: 0 0 12px rgba(0, 163, 224, 0.38);
+  letter-spacing: 0.5px;
+  will-change: transform, opacity;
+  animation: rbCalcGaze 0.25s ease-in-out infinite alternate;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .rb-calculating {
+  color: #FFE082 !important;
+  text-shadow: 0 0 14px rgba(255, 224, 130, 0.55);
+}
+
+@keyframes rbCalcGaze {
+  from { filter: brightness(0.95); opacity: 0.88; }
+  to { filter: brightness(1.22); opacity: 1; }
+}
+
+.rb-calc-settled {
+  animation: rbCalcPop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes rbCalcPop {
+  0% {
+    transform: scale(1.08);
+    filter: brightness(1.3);
+  }
+  60% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* ===== 7. ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  .rb-tilt,
+  .rb-magnet,
+  .rb-shiny-text,
+  .status-badge::after,
+  #pageAppWrapper > main,
+  .page-layout,
+  .rb-dropdown-enter,
+  .asset-cards-row,
+  .aset-metrics-grid,
+  .grid-3,
+  .kpi-row,
+  .summary-cards-row,
+  .scurve-wrap,
+  .rb-calculating,
+  .rb-calc-settled {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}

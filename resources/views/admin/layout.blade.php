@@ -337,7 +337,7 @@
     <div class="user-badge">
       <div class="info">
         <div class="name">{{ Auth::user()->name ?? 'Administrator' }}</div>
-        <div class="role">{{ Auth::user()->email ?? 'admin@pln.co.id' }}</div>
+        <div class="role">{{ Auth::user()->email ?? 'Admin' }}</div>
       </div>
       <form action="{{ route('logout') }}" method="POST">
         @csrf

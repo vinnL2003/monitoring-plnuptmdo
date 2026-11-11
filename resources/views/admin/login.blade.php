@@ -158,28 +158,22 @@
     @csrf
     <div class="form-group">
       <label for="email">Alamat Email</label>
-      <input type="email" id="email" name="email" class="form-control" placeholder="admin@pln.co.id" value="{{ old('email', 'admin@pln.co.id') }}" required autofocus>
+      <input type="email" id="email" name="email" class="form-control" placeholder="nama@email.com" value="{{ old('email') }}" required autofocus>
     </div>
 
     <div class="form-group">
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" value="admin123" required>
+      <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-size:12.5px;">
       <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#475569;">
-        <input type="checkbox" name="remember" value="1" checked> Ingat Saya
+        <input type="checkbox" name="remember" value="1"> Ingat Saya
       </label>
     </div>
 
     <button type="submit" class="btn-submit">Masuk ke Panel Admin</button>
   </form>
-
-  <div class="credentials-hint">
-    💡 <b>Akun Default:</b><br>
-    Email: <strong>admin@pln.co.id</strong><br>
-    Password: <strong>admin123</strong>
-  </div>
 
   <div>
     <a href="{{ route('home') }}" class="back-link">← Kembali ke Halaman Utama</a>

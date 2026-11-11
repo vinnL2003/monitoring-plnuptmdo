@@ -1,120 +1,106 @@
-# PLN UPT MANADO — Dashboard Kinerja & CMS Admin Laravel
+# Dashboard Kinerja & CMS Admin — PLN UPT Manado
 
-Proyek web Laravel lengkap yang memuat seluruh konten dan visual dari website **PLN UPT Manado** (Dashboard Kinerja Transmisi) serta dilengkapi dengan **Panel Admin (CMS)** untuk memodifikasi konten, judul, gambar/logo, kartu metrik, progres konstruksi, dan integrasi spreadsheet Google.
+Sistem dashboard monitoring kinerja transmisi dan manajemen konten (CMS) berbasis **Laravel**, dirancang untuk visualisasi metrik operasional, pemetaan GIS interaktif, serta pengelolaan data secara dinamis.
 
 ---
 
 ## 🌟 Fitur Utama
 
 ### 1. Halaman Publik (Frontend)
-- **Home (`/`)**: Dashboard utama yang memuat:
-  1. Ringkasan Kinerja Unit (NKO) dengan filter bulanan dan popup gap point
-  2. Peta GIS Leaflet interaktif dengan jalur transmisi 150kV / 70kV dan titik Gardu Induk
-  3. Ringkasan Health Index Peralatan (MTU, Proteksi/Relay, Tower, dan inspeksi IL3 Power Inspect)
-  4. Ringkasan Common Enemy per stream
-  5. Ringkasan Program Anti Blackout (ABO)
-  6. Ringkasan Progres Konstruksi & Penyaluran COD / STO
-  7. Ringkasan KKU
-- **Kinerja Unit (`/kinerja-transmisi`)**: Halaman detail kinerja transmisi per ULTG
-- **Anggaran Unit (`/anggaran`)**: Dashboard realisasi anggaran investasi & operasi
-- **AHI (`/ahi`)**: Detail Anomali Health Index peralatan
-- **Common Enemy (`/common-enemy`)**: Detail program kerja penanganan gangguan
-- **Program Anti Blackout (`/abo`)**: Detail program mitigasi gangguan transmisi & GI
-- **Mode Tampilan**: Light Mode & Dark Mode switch yang halus
-- **Branding PLN**: Desain elegan dan responsif dengan palet resmi PLN (Kuning `#FFC72C` & Biru `#00529C`)
+- **Dashboard Utama**:
+  - Ringkasan Kinerja Unit (NKO) dengan filter berkala.
+  - Peta GIS interaktif (Leaflet.js) menampilkan jalur transmisi 150kV / 70kV dan titik Gardu Induk (GI).
+  - Ringkasan Health Index Peralatan (MTU, Proteksi/Relay, Tower, dan inspeksi IL3 Power Inspect).
+  - Ringkasan Common Enemy dan Program Anti Blackout (ABO).
+  - Indikator progres konstruksi & penyaluran COD / STO.
+- **Halaman Detail**: Kinerja Transmisi, Anggaran Unit, Anomali Health Index (AHI), Common Enemy, dan Anti Blackout.
+- **UI & Tema**: Mendukung Light Mode & Dark Mode dengan palet warna korporat yang responsif di berbagai perangkat.
 
-### 2. Panel Admin CMS (`/admin`)
-Panel khusus untuk mengelola konten website secara dinamis tanpa perlu mengubah baris kode:
-- 📊 **Dashboard Overview**: Ringkasan status sistem, jumlah section, metrik aktif, dan pintasan cepat.
-- ⚙️ **Pengaturan Website & Branding (`/admin/settings`)**:
-  - Ubah judul situs (Title Tag tab browser)
-  - Ubah sub-judul unit
-  - Upload / ganti logo header PLN & logo hero animasi UPT Manado
-  - Atur teks badge live & jam realtime hero
-  - Ubah teks copyright footer
-- 📑 **Kelola 7 Section (`/admin/sections`)**:
-  - Aktifkan / sembunyikan section tertentu dari halaman utama (Toggle on/off)
-  - Edit judul section & deskripsi pengantar
-  - Atur urutan tampil
-- 📈 **Kartu Statistik & Metrik (`/admin/stat-cards`)**:
-  - Tambah, edit, dan hapus angka pada kartu statistik (Aset, KKU, dsb.)
-  - Ubah label, angka capaian, satuan (kms, Unit, Tower, dsb.), dan footer card
-- 🏗️ **Progres Konstruksi & COD (`/admin/progress`)**:
-  - Tambah, edit, dan hapus indikator persentase penyelesaian fisik proyek
-  - Ubah deskripsi proyek dan persentase capaian (0 - 100%)
-- 🌐 **Sumber Data Google Sheets (`/admin/data-sources`)**:
-  - Kelola URL endpoint CSV untuk NKO, AHI, Kondisi Tower, Aset, GI Markers, Common Enemy, dan Anti Blackout
-  - Dilengkapi tombol **Test Koneksi** realtime untuk menguji respon Google Sheet
-- 🧭 **Menu Navigasi Header (`/admin/navigation`)**:
-  - Tambah, ubah link, atur urutan, dan sembunyikan menu pada header
+### 2. Panel Admin CMS
+Panel administrasi untuk memperbarui konten website tanpa mengubah kode:
+- 📊 **Dashboard Overview**: Ringkasan status sistem dan metrik aktif.
+- ⚙️ **Pengaturan Website & Branding**: Kustomisasi judul, sub-judul, logo, jam live, dan informasi footer.
+- 📑 **Manajemen Section**: Mengatur urutan, mengubah deskripsi, atau mengaktifkan/menonaktifkan section di halaman utama.
+- 📈 **Kartu Statistik & Metrik**: Kelola data capaian aset, KPI, dan indikator unit.
+- 🏗️ **Progres Konstruksi & COD**: Pelacakan persentase penyelesaian fisik proyek.
+- 🌐 **Integrasi Sumber Data**: Manajemen endpoint data eksternal (Google Sheets / CSV) dengan fitur tes koneksi.
+- 🧭 **Navigasi Header**: Pengaturan menu navigasi dinamis.
 
 ---
 
-## 🔐 Akun Login Administrator
+## 🛠️ Tech Stack
 
-| Parameter | Kredensial Default |
-|-----------|--------------------|
-| **URL Login** | `http://127.0.0.1:8000/login` |
-| **Email** | `admin@pln.co.id` |
-| **Password** | `admin123` |
+- **Backend**: Laravel 11 / PHP 8.2+
+- **Frontend**: Blade Templating, Tailwind CSS, JavaScript
+- **Peta GIS**: Leaflet.js
+- **Database**: SQLite / MySQL / PostgreSQL
 
 ---
 
-## 🚀 Panduan Menjalankan Project
+## 🚀 Panduan Instalasi Lokal
 
-### 1. Masuk ke direktori project:
+### 1. Clone Repository
 ```bash
-cd "c:\kevin\Magang\Web 1\upt-manado-laravel"
+git clone https://github.com/<username>/monitoring-plnuptmdo.git
+cd monitoring-plnuptmdo
 ```
 
-### 2. Migrasi Database & Seeding Data Awal:
+### 2. Install Dependensi Backend & Frontend
+```bash
+composer install
+npm install
+npm run build
+```
+
+### 3. Konfigurasi Environment
+Salin file konfigurasi contoh dan buat application key:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+> Sesuaikan pengaturan database pada file `.env` jika ingin menggunakan MySQL atau PostgreSQL.
+
+### 4. Migrasi Database & Seeding
+Jalankan migrasi tabel beserta data awal:
 ```bash
 php artisan migrate --seed
 ```
 
-### 3. Jalankan Server Lokal:
+### 5. Jalankan Server Pengembangan
 ```bash
 php artisan serve
 ```
-Buka browser dan akses:
-- **Website Publik**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- **Panel Admin**: [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login)
+Akses aplikasi melalui browser:
+- **Website Publik**: `http://127.0.0.1:8000`
+- **Panel Admin**: `http://127.0.0.1:8000/login`
+
+> **Catatan Administrator**: Akun default dibuat secara otomatis melalui `DatabaseSeeder.php`. Anda dapat menyesuaikan kredensial admin pada file seeder tersebut sebelum migrasi, atau memperbaruinya melalui dashboard setelah login pertama kali.
 
 ---
 
-## 📂 Struktur Penting Aplikasi
+## 📂 Struktur Direktori
 
-```
-upt-manado-laravel/
+```text
 ├── app/
 │   ├── Http/Controllers/
-│   │   ├── WebController.php               # Menampilkan website publik & inject data dinamis
-│   │   ├── AuthController.php              # Login & logout admin
-│   │   └── Admin/                          # Controller Panel Admin (CMS)
-│   │       ├── DashboardController.php     # Ringkasan KPI Admin
-│   │       ├── SettingController.php       # Pengaturan branding & logo
-│   │       ├── SectionController.php       # Kelola 7 section
-│   │       ├── StatCardController.php      # Kelola kartu metrik & aset
-│   │       ├── ProgressItemController.php  # Kelola progres konstruksi & COD
-│   │       ├── DataSourceController.php    # Kelola URL CSV Google Sheet
-│   │       └── NavigationController.php    # Kelola menu navigasi header
-│   └── Models/
-│       ├── SiteSetting.php
-│       ├── Section.php
-│       ├── StatCard.php
-│       ├── ProgressItem.php
-│       ├── DataSource.php
-│       └── NavigationItem.php
+│   │   ├── WebController.php         # Kontroller halaman publik
+│   │   ├── AuthController.php        # Autentikasi CMS
+│   │   └── Admin/                    # Kontroller modul panel admin
+│   └── Models/                       # Model Eloquent (SiteSetting, Section, dll.)
 ├── database/
-│   ├── migrations/                         # Struktur tabel CMS
-│   └── seeders/DatabaseSeeder.php          # Data awal (Admin user, settings, dll.)
+│   ├── migrations/                   # Skema database
+│   └── seeders/                      # Data awal sistem & pengaturan
 ├── resources/views/
-│   ├── layouts/app.blade.php               # Master layout publik (Header, Nav, Hero, Footer)
-│   ├── pages/                              # Halaman publik (Home, Kinerja, Anggaran, AHI, dll.)
-│   └── admin/                              # Tampilan Panel Admin (Sleek UI)
-└── public/
-    ├── Logo_PLN.png, PLN_White.png         # Logo resmi PLN
-    ├── Logo_UPT_Manado.png                 # Logo hero UPT Manado
-    ├── tower-data.js                       # Data koordinat titik tower transmisi
-    └── uploads/                            # Folder upload logo & media dinamis
+│   ├── layouts/app.blade.php         # Master layout
+│   ├── pages/                        # Tampilan halaman publik
+│   └── admin/                        # Tampilan panel admin
+└── public/                           # Aset publik (gambar, icon, script GIS)
 ```
+
+---
+
+## 🔒 Keamanan
+
+- File kredensial sensitif (`.env`) diabaikan oleh Git secara default dan tidak boleh diunggah ke repository publik.
+- Pastikan `APP_DEBUG=false` pada lingkungan produksi (*production*).
+- Selalu ganti password default akun administrator sebelum mempublikasikan aplikasi ke server online.

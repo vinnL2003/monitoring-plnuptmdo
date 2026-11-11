@@ -28,8 +28,7 @@ Railway melakukan deployment otomatis membaca repository GitHub Anda.
 1. Unduh dan install aplikasi **GitHub Desktop**: [https://desktop.github.com/](https://desktop.github.com/)
 2. Buka GitHub Desktop dan login dengan akun GitHub Anda.
 3. Klik menu **File** ➔ **Add Local Repository...** (atau tekan `Ctrl + O`).
-4. Pilih folder:
-   `c:\kevin\Magang\Web 1\upt-manado-laravel`
+4. Pilih folder direktori project ini di komputer Anda.
 5. Jika muncul pesan *"This directory does not appear to be a Git repository"*, klik tombol **create a repository**.
 6. Klik tombol **Publish repository** di bagian atas untuk mengunggahnya ke akun GitHub Anda (bisa dicentang *Keep this code private* atau *Public*).
 
@@ -78,7 +77,7 @@ Agar Laravel terhubung ke database MySQL Railway dan dapat berjalan dalam mode p
 ```env
 APP_NAME="DASHBOARD KINERJA PLN UPT MANADO"
 APP_ENV=production
-APP_KEY=base64:7frZdTNLVZqi2OLxS7A144fjOIBXLo21WxTxvuqPRRo=
+APP_KEY= # Generate menggunakan: php artisan key:generate --show
 APP_DEBUG=false
 APP_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 
@@ -121,9 +120,8 @@ NIXPACKS_PHP_ROOT_DIR=/public
 1. Buka domain publik yang didapatkan di browser (contoh: `https://upt-manado-xxxx.up.railway.app`).
 2. Dashboard publik PLN UPT Manado akan langsung tampil lengkap dengan seluruh 7 section dan peta Leaflet.
 3. Untuk masuk ke Admin Panel:
-   - Akses: `https://upt-manado-xxxx.up.railway.app/login`
-   - Email: **`admin@pln.co.id`**
-   - Password: **`admin123`**
+   - Akses: `https://<domain-anda>.up.railway.app/login`
+   - Kredensial akun administrator default dibuat melalui `DatabaseSeeder.php` saat seeder dijalankan. Segera ubah password setelah login pertama.
 4. Buka menu **Data Master ➔ Kartu Statistik & Metrik**:
    - Seluruh 24 kartu statistik telah terdaftar.
    - Anda dapat mencoba tombol **⚡ 2-Arah** untuk memastikan penulisan data berjalan lancar.

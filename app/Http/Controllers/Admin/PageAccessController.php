@@ -11,8 +11,89 @@ use Illuminate\Validation\Rule;
 
 class PageAccessController extends Controller
 {
+    public static function seedDefaultPages(): void
+    {
+        $defaultPages = [
+            [
+                'page_slug' => 'anggaran',
+                'page_name' => 'Anggaran Unit',
+                'page_url' => '/anggaran',
+                'icon' => '💰',
+                'is_restricted' => true,
+                'description' => 'Monitoring RKAU, SKKI, SKKO, dan PRK Investasi / Operasi UPT Manado',
+            ],
+            [
+                'page_slug' => 'kinerja-transmisi',
+                'page_name' => 'Kinerja Unit / Transmisi',
+                'page_url' => '/kinerja-transmisi',
+                'icon' => '⚡',
+                'is_restricted' => false,
+                'description' => 'Kinerja transmisi, frekuensi gangguan, dan real-time monitoring',
+            ],
+            [
+                'page_slug' => 'aset',
+                'page_name' => 'Aset Transmisi',
+                'page_url' => '/aset',
+                'icon' => '🏭',
+                'is_restricted' => false,
+                'description' => 'Peta Gardu Induk, tower transmisi, dan inventaris aset UPT',
+            ],
+            [
+                'page_slug' => 'ahi',
+                'page_name' => 'Asset Health Index (AHI)',
+                'page_url' => '/ahi',
+                'icon' => '🩺',
+                'is_restricted' => false,
+                'description' => 'Indeks kesehatan trafo dan peralatan bay',
+            ],
+            [
+                'page_slug' => 'common-enemy',
+                'page_name' => 'Common Enemy',
+                'page_url' => '/common-enemy',
+                'icon' => '🎯',
+                'is_restricted' => false,
+                'description' => 'Monitoring mitigasi titik rawan dan pohon',
+            ],
+            [
+                'page_slug' => 'abo',
+                'page_name' => 'Program Anti Blackout (ABO)',
+                'page_url' => '/abo',
+                'icon' => '🛡️',
+                'is_restricted' => false,
+                'description' => 'Kesiapan skema pertahanan sistem kelistrikan UPT',
+            ],
+            [
+                'page_slug' => 'konstruksi-penyaluran',
+                'page_name' => 'Konstruksi & Penyaluran',
+                'page_url' => '/konstruksi-penyaluran',
+                'icon' => '🏗️',
+                'is_restricted' => false,
+                'description' => 'Proyek transmisi baru, rekonduktoring, dan progres COD',
+            ],
+            [
+                'page_slug' => 'kku',
+                'page_name' => 'Keuangan, Komunikasi & Umum (KKU)',
+                'page_url' => '/kku',
+                'icon' => '👥',
+                'is_restricted' => false,
+                'description' => 'Pengelolaan SDM, TJSL, sertifikasi tanah, dan administrasi umum',
+            ],
+        ];
+
+        foreach ($defaultPages as $p) {
+            PageAccessSetting::updateOrCreate(
+                ['page_slug' => $p['page_slug']],
+                $p
+            );
+        }
+    }
+
     public function index()
     {
+        if (PageAccessSetting::count() === 0) {
+            self::seedDefaultPages();
+        }
+
         $settings = PageAccessSetting::orderBy('id')->get();
         $accounts = PageAccessAccount::orderBy('name')->get();
 
@@ -51,6 +132,9 @@ class PageAccessController extends Controller
 
     public function createAccount()
     {
+        if (PageAccessSetting::count() === 0) {
+            self::seedDefaultPages();
+        }
         $pages = PageAccessSetting::orderBy('id')->get();
         return view('admin.page_access.account_create', compact('pages'));
     }

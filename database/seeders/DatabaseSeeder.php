@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\DataSource;
 use App\Models\NavigationItem;
+use App\Models\PageAccessAccount;
+use App\Models\PageAccessSetting;
 use App\Models\ProgressItem;
 use App\Models\Section;
 use App\Models\SiteSetting;
@@ -323,6 +325,21 @@ class DatabaseSeeder extends Seeder
                 ['section_id' => $sec6->id, 'title' => $p['title']],
                 $p
             );
+        }
+
+        // 7. Seed Page Access Settings (Mode Proteksi Halaman)
+        \App\Http\Controllers\Admin\PageAccessController::seedDefaultPages();
+
+        // 8. Seed Default Personnel Account if not exists
+        if (PageAccessAccount::count() === 0) {
+            PageAccessAccount::create([
+                'name' => 'Admin Monitoring UPT',
+                'username' => 'admin',
+                'password' => Hash::make('admin'),
+                'allowed_pages' => ['*'],
+                'is_active' => true,
+                'notes' => 'Akun personil default dengan akses ke semua halaman terbatas',
+            ]);
         }
     }
 }

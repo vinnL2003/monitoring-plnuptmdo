@@ -233,10 +233,29 @@ class DataSourceController extends Controller
                 return back()->with('error', "URL sumber data belum diisi.");
             }
 
-            $response = Http::withoutVerifying()->timeout(15)->get($dataSource->url);
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'Accept' => 'text/csv,text/plain,application/csv,*/*',
+                ])
+                ->timeout(25)
+                ->retry(2, 500)
+                ->get($dataSource->url);
+
             if ($response->successful()) {
-                $bytes = strlen($response->body());
-                $firstLines = array_slice(explode("\n", trim($response->body())), 0, 4);
+                $body = $response->body();
+                $trimmed = ltrim($body);
+                if (stripos($trimmed, '<!doctype html') === 0 || stripos($trimmed, '<html') === 0) {
+                    return back()->with('error', "Koneksi terhubung ke Google, tetapi yang diterima berupa halaman web HTML, bukan file CSV mentah. Pastikan spreadsheet dipublikasikan via 'File -> Bagikan -> Publikasikan ke web -> Format CSV'.");
+                }
+
+                // Perbarui cache CSV jika sukses
+                try {
+                    cache()->put('datasource_csv_cache_' . $dataSource->id, $body, now()->addDays(7));
+                } catch (\Throwable $ce) {}
+
+                $bytes = strlen($body);
+                $firstLines = array_slice(explode("\n", trim($body)), 0, 4);
                 return back()->with('success', "Koneksi Google Sheets berhasil! Diterima " . number_format($bytes) . " bytes data.\nSample isi data:\n" . implode("\n", $firstLines));
             } else {
                 return back()->with('error', "Gagal menghubungi Google Sheet: HTTP {$response->status()}");

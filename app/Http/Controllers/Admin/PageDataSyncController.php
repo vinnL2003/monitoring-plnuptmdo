@@ -185,7 +185,15 @@ class PageDataSyncController extends Controller
                     $loadError = "File lokal '{$dataSource->file_path}' tidak ditemukan di server.";
                 }
             } elseif ($dataSource->source_type === 'url' && $dataSource->url) {
-                $response = Http::withoutVerifying()->timeout(15)->get($dataSource->url);
+                $response = Http::withoutVerifying()
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        'Accept' => 'text/csv,text/plain,application/csv,*/*',
+                    ])
+                    ->timeout(25)
+                    ->retry(2, 500)
+                    ->get($dataSource->url);
+
                 if ($response->successful()) {
                     $rawText = $response->body();
                     $rawRows = $this->syncService->parseCsvContent($rawText);
@@ -194,7 +202,15 @@ class PageDataSyncController extends Controller
                 }
             } elseif ($dataSource->url) {
                 // Fallback jika source_type none tapi ada url
-                $response = Http::withoutVerifying()->timeout(12)->get($dataSource->url);
+                $response = Http::withoutVerifying()
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        'Accept' => 'text/csv,text/plain,application/csv,*/*',
+                    ])
+                    ->timeout(20)
+                    ->retry(2, 500)
+                    ->get($dataSource->url);
+
                 if ($response->successful()) {
                     $rawText = $response->body();
                     $rawRows = $this->syncService->parseCsvContent($rawText);
@@ -384,7 +400,14 @@ class PageDataSyncController extends Controller
         }
 
         try {
-            $response = Http::withoutVerifying()->timeout(20)->get($dataSource->url);
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'Accept' => 'text/csv,text/plain,application/csv,*/*',
+                ])
+                ->timeout(25)
+                ->retry(2, 500)
+                ->get($dataSource->url);
             if (!$response->successful()) {
                 return back()->with('error', "Gagal menghubungi Google Spreadsheet: HTTP {$response->status()}");
             }

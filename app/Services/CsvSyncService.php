@@ -37,12 +37,51 @@ class CsvSyncService
                 throw new \Exception("URL Google Sheet belum diisi untuk sumber data '{$dataSource->name}'.");
             }
 
-            $response = Http::withoutVerifying()->timeout(15)->get($dataSource->url);
-            if (!$response->successful()) {
-                throw new \Exception("Gagal mengunduh CSV Google Sheet (HTTP {$response->status()}).");
-            }
+            $cacheKey = 'datasource_csv_cache_' . $dataSource->id;
 
-            $content = $response->body();
+            try {
+                $response = Http::withoutVerifying()
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        'Accept' => 'text/csv,text/plain,application/csv,*/*',
+                        'Cache-Control' => 'no-cache',
+                    ])
+                    ->timeout(25)
+                    ->retry(3, 1000)
+                    ->get($dataSource->url);
+
+                if (!$response->successful()) {
+                    throw new \Exception("Gagal mengunduh CSV Google Sheet (HTTP {$response->status()}).");
+                }
+
+                $body = $response->body();
+                $trimmed = ltrim($body);
+
+                // Validasi format: pastikan Google tidak merespons dengan dokumen web HTML (halaman login/captcha)
+                if (stripos($trimmed, '<!doctype html') === 0 || stripos($trimmed, '<html') === 0 || (stripos($trimmed, '<head') !== false && stripos($trimmed, '<body') !== false)) {
+                    throw new \Exception("Google Sheets mengembalikan format HTML (bukan CSV). Kemungkinan tautan belum dipublikasikan sebagai CSV atau sedang dibatasi.");
+                }
+
+                $content = $body;
+
+                // Simpan cache konten CSV yang valid (7 hari) sebagai cadangan jika Google sewaktu-waktu throttling
+                try {
+                    cache()->put($cacheKey, $content, now()->addDays(7));
+                } catch (\Throwable $ce) {}
+
+            } catch (\Throwable $e) {
+                // Jika koneksi langsung ke Google gagal (timeout/rate-limit), gunakan cache CSV terakhir yang berhasil diunduh
+                $cachedContent = null;
+                try {
+                    $cachedContent = cache()->get($cacheKey);
+                } catch (\Throwable $ce) {}
+
+                if ($cachedContent && trim($cachedContent) !== '') {
+                    $content = $cachedContent;
+                } else {
+                    throw new \Exception("Gagal mengunduh CSV dari Google Sheet: {$e->getMessage()}");
+                }
+            }
         }
 
         return $this->parseCsvContent($content);

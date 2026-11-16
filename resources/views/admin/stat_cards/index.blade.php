@@ -167,7 +167,7 @@
                   @endif
                   @if($card->last_synced_at)
                     <div style="font-size:9.5px; color:var(--text-muted); margin-top:2px;">
-                      {{ $card->last_synced_at->format('d/m/Y H:i') }}
+                      {{ $card->last_synced_at->format('d/m/Y H:i') }} WITA
                     </div>
                   @endif
                 </td>

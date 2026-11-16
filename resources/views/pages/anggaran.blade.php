@@ -398,33 +398,48 @@ let STATE = { charts:{}, mainRows:null, prkRows:null };
 function destroyChart(key){ if(STATE.charts[key]){ STATE.charts[key].destroy(); delete STATE.charts[key]; } }
 
 async function fetchCsvRows(url, timeoutMs){
-  timeoutMs = timeoutMs || 3000;
+  timeoutMs = timeoutMs || 15000;
   if(!url || !url.trim()) return [];
-  // 1. Direct fetch
-  try{
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), timeoutMs);
-    const res = await fetch(url, {cache:'no-store', signal: controller.signal});
-    clearTimeout(timer);
-    if(res.ok){
-      const text = await res.text();
-      return Papa.parse(text, {skipEmptyLines:false}).data;
+
+  // 1. Jika URL lokal di server, unduh langsung (<50ms)
+  if(!url.startsWith('http://') && !url.startsWith('https://')){
+    try{
+      const res = await fetch(url);
+      if(res.ok){
+        const text = await res.text();
+        return Papa.parse(text, {skipEmptyLines:false}).data;
+      }
+    }catch(e){
+      console.warn('[Anggaran fetch] Local fetch failed:', e);
     }
-  }catch(err){
-    console.warn('[Anggaran fetch] Direct fetch failed for', url, err.message, 'trying proxy fallback...');
   }
 
-  // 2. Proxy fallback for external URLs
+  // 2. Jika URL eksternal, gunakan proxy backend (anti CORS & anti rate-limit)
   if(url.startsWith('http://') || url.startsWith('https://')){
     try{
       const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
       const res = await fetch(proxyUrl);
       if(res.ok){
         const text = await res.text();
+        const parsed = Papa.parse(text, {skipEmptyLines:false}).data;
+        if(parsed && parsed.length >= 2) return parsed;
+      }
+    }catch(err){
+      console.warn('[Anggaran fetch] Proxy fetch failed, trying direct fallback...', err);
+    }
+
+    // 3. Fallback direct fetch
+    try{
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), timeoutMs);
+      const res = await fetch(url, {cache:'no-store', signal: controller.signal});
+      clearTimeout(timer);
+      if(res.ok){
+        const text = await res.text();
         return Papa.parse(text, {skipEmptyLines:false}).data;
       }
     }catch(err){
-      console.error('[Anggaran fetch] Proxy fetch failed too:', err);
+      console.warn('[Anggaran fetch] Direct fetch failed too:', err.message);
     }
   }
   throw new Error('Gagal mengambil data anggaran dari sumber');

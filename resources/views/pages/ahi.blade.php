@@ -368,33 +368,48 @@ const AHI_COLORS = { vg:'#27AE60', g:'#82C91E', f:'#F1C40F', p:'#E67E22', c:'#E7
 let STATE = { data: null, charts: {} };
 
 async function fetchCsvRows(url, timeoutMs){
-  timeoutMs = timeoutMs || 3000;
+  timeoutMs = timeoutMs || 15000;
   if(!url || !url.trim()) return [];
-  // 1. Direct fetch
-  try{
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), timeoutMs);
-    const res = await fetch(url, {cache:'no-store', signal: controller.signal});
-    clearTimeout(timer);
-    if(res.ok){
-      const text = await res.text();
-      return Papa.parse(text, {skipEmptyLines:false}).data;
+
+  // 1. Jika URL lokal di server (hasil sinkron/upload lokal), unduh langsung sangat cepat (<50ms)
+  if(!url.startsWith('http://') && !url.startsWith('https://')){
+    try{
+      const res = await fetch(url);
+      if(res.ok){
+        const text = await res.text();
+        return Papa.parse(text, {skipEmptyLines:false}).data;
+      }
+    }catch(e){
+      console.warn('[AHI fetch] Local fetch failed:', e);
     }
-  }catch(err){
-    console.warn('[AHI fetch] Direct fetch failed for', url, err.message, 'trying proxy fallback...');
   }
 
-  // 2. Proxy fallback for external URLs
+  // 2. Jika URL Google Sheets eksternal, prioritaskan proxy backend (anti CORS & anti throttling)
   if(url.startsWith('http://') || url.startsWith('https://')){
     try{
       const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
       const res = await fetch(proxyUrl);
       if(res.ok){
         const text = await res.text();
+        const parsed = Papa.parse(text, {skipEmptyLines:false}).data;
+        if(parsed && parsed.length >= 2) return parsed;
+      }
+    }catch(err){
+      console.warn('[AHI fetch] Proxy fetch failed, trying direct fallback...', err);
+    }
+
+    // 3. Fallback direct fetch (jika proxy mengalami kendala)
+    try{
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), timeoutMs);
+      const res = await fetch(url, {cache:'no-store', signal: controller.signal});
+      clearTimeout(timer);
+      if(res.ok){
+        const text = await res.text();
         return Papa.parse(text, {skipEmptyLines:false}).data;
       }
     }catch(err){
-      console.error('[AHI fetch] Proxy fetch failed too:', err);
+      console.warn('[AHI fetch] Direct fetch failed too:', err.message);
     }
   }
   throw new Error('Gagal mengambil data dari Google Sheets / Sumber Data');
@@ -511,7 +526,7 @@ async function loadAhiData(){
     return;
   }
   try{
-    const rows = await fetchCsvRows(AHI_CSV_URL, 3500);
+    const rows = await fetchCsvRows(AHI_CSV_URL, 15000);
     if(!rows || rows.length < 5) throw new Error('Data yang diterima terlalu sedikit (' + (rows?rows.length:0) + ' baris)');
     console.log('[AHI debug] Total baris diterima:', rows.length);
 

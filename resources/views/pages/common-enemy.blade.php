@@ -412,13 +412,17 @@ async function fetchCsvRows(url, timeoutMs){
     }
   }
 
-  try{
-    return await doFetch(url);
-  }catch(errDirect){
-    console.warn('Direct fetch failed, trying proxy...', errDirect.message);
-    const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
-    return await doFetch(proxyUrl);
+  if(url.startsWith('http://') || url.startsWith('https://')){
+    try{
+      const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
+      return await doFetch(proxyUrl);
+    }catch(errProxy){
+      console.warn('Proxy fetch failed, trying direct fallback...', errProxy.message);
+      return await doFetch(url);
+    }
   }
+
+  return await doFetch(url);
 }
 
 function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }

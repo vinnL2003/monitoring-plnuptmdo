@@ -1109,6 +1109,33 @@
     });
   }
 
+  // Helper pemanggilan CSV cerdas (prioritas lokal & proxy anti-CORS)
+  async function fetchAsetCsv(url, timeoutMs){
+    timeoutMs = timeoutMs || 15000;
+    if(!url || !url.trim()) return null;
+    if(!url.startsWith('http://') && !url.startsWith('https://')){
+      try{
+        const res = await fetch(url);
+        if(res.ok) return await res.text();
+      }catch(e){}
+    }
+    if(url.startsWith('http://') || url.startsWith('https://')){
+      try{
+        const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
+        const res = await fetch(proxyUrl);
+        if(res.ok) return await res.text();
+      }catch(err){}
+      try{
+        const controller = new AbortController();
+        const timer = setTimeout(()=>controller.abort(), timeoutMs);
+        const res = await fetch(url, {cache:'no-store', signal: controller.signal});
+        clearTimeout(timer);
+        if(res.ok) return await res.text();
+      }catch(err){}
+    }
+    return null;
+  }
+
   // Load GI detail live update
   async function loadGiDetail(){
     let freshCsvText = null;
@@ -1118,20 +1145,7 @@
     }catch(e){}
 
     if(!freshCsvText && GI_CSV_URL && GI_CSV_URL.trim()){
-      try{
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
-        let res = null;
-        try{
-          res = await fetch(GI_CSV_URL, { signal: controller.signal });
-        }catch(err){
-          res = await fetch('/api/proxy-csv?url=' + encodeURIComponent(GI_CSV_URL), { signal: controller.signal });
-        }
-        clearTimeout(timeoutId);
-        if(res && res.ok) freshCsvText = await res.text();
-      }catch(err){
-        console.warn('GI live fetch timeout / unreached, using embedded GI dataset.');
-      }
+      freshCsvText = await fetchAsetCsv(GI_CSV_URL);
     }
 
     if(freshCsvText && typeof Papa !== 'undefined'){
@@ -1187,18 +1201,7 @@
     if(!ASSET_CSV_URL || !ASSET_CSV_URL.trim()) return;
 
     try{
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      let res = null;
-      try{
-        res = await fetch(ASSET_CSV_URL, { signal: controller.signal });
-      }catch(err){
-        res = await fetch('/api/proxy-csv?url=' + encodeURIComponent(ASSET_CSV_URL), { signal: controller.signal });
-      }
-      clearTimeout(timeoutId);
-
-      if(!res || !res.ok) return;
-      const text = await res.text();
+      const text = await fetchAsetCsv(ASSET_CSV_URL);
       if(!text || typeof Papa === 'undefined') return;
 
       const rows = Papa.parse(text, { skipEmptyLines: true }).data;

@@ -437,31 +437,77 @@ class WebController extends Controller
         }
 
         $cacheKey = 'proxy_csv_' . md5($url);
+        $backupCacheKey = $cacheKey . '_backup';
+
         if ($request->query('refresh') === '1') {
             \Illuminate\Support\Facades\Cache::forget($cacheKey);
         }
 
+        // 1. Ambil dari cache aktif (5 menit) jika tersedia
+        $cachedBody = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if (!empty($cachedBody)) {
+            return response($cachedBody, 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'Access-Control-Allow-Origin' => '*',
+                'Cache-Control' => 'public, max-age=300',
+                'X-Data-Source' => 'cache',
+            ]);
+        }
+
         try {
-            $body = \Illuminate\Support\Facades\Cache::remember($cacheKey, 180, function () use ($url) {
-                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
-                    ->timeout(12)
-                    ->get($url);
+            // 2. Unduh langsung dari Google Sheets dengan User-Agent browser & timeout yang memadai
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'Accept' => 'text/csv,text/plain,*/*',
+                ])
+                ->timeout(20)
+                ->retry(2, 500)
+                ->get($url);
 
-                if ($response->successful()) {
-                    return $response->body();
+            if ($response->successful()) {
+                $body = $response->body();
+                $trimmed = ltrim($body);
+
+                // Pastikan respon bukan berupa dokumen HTML login/captcha Google
+                if (stripos($trimmed, '<!doctype html') !== 0 && stripos($trimmed, '<html') !== 0) {
+                    // Simpan cache aktif 5 menit & backup 7 hari
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $body, 300);
+                    \Illuminate\Support\Facades\Cache::put($backupCacheKey, $body, now()->addDays(7));
+
+                    return response($body, 200, [
+                        'Content-Type' => 'text/plain; charset=UTF-8',
+                        'Access-Control-Allow-Origin' => '*',
+                        'Cache-Control' => 'public, max-age=300',
+                        'X-Data-Source' => 'live',
+                    ]);
                 }
-                return null;
-            });
+            }
 
-            if ($body !== null) {
-                return response($body, 200, [
+            // Jika respons Google tidak valid (HTML atau status != 200), gunakan cadangan cache terakhir
+            $backup = \Illuminate\Support\Facades\Cache::get($backupCacheKey);
+            if (!empty($backup)) {
+                return response($backup, 200, [
                     'Content-Type' => 'text/plain; charset=UTF-8',
                     'Access-Control-Allow-Origin' => '*',
-                    'Cache-Control' => 'public, max-age=180',
+                    'Cache-Control' => 'public, max-age=60',
+                    'X-Data-Source' => 'backup_cache',
                 ]);
             }
-            return response('Gagal mengambil data dari Google Sheets', 502);
-        } catch (\Exception $e) {
+
+            return response('Gagal mengambil data dari Google Sheets (format tidak valid atau dibatasi)', 502);
+        } catch (\Throwable $e) {
+            // Jika koneksi server ke Google gagal/timeout, gunakan cadangan cache terakhir
+            $backup = \Illuminate\Support\Facades\Cache::get($backupCacheKey);
+            if (!empty($backup)) {
+                return response($backup, 200, [
+                    'Content-Type' => 'text/plain; charset=UTF-8',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Cache-Control' => 'public, max-age=60',
+                    'X-Data-Source' => 'backup_cache',
+                ]);
+            }
+
             return response('Gagal terhubung ke sumber data: ' . $e->getMessage(), 500);
         }
     }

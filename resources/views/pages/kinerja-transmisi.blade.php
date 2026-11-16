@@ -2212,32 +2212,51 @@ function populatePeriodDropdown(monthCode){
 // Ambil satu sumber CSV dengan retry ringan (1x ulang bila gagal), supaya tidak mudah gugur
 // akibat rate-limit sesaat dari Google Sheets ketika banyak request bersamaan.
 async function fetchCsv(url, timeoutMs){
-  timeoutMs = timeoutMs || 3000;
-  async function doFetch(targetUrl){
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  timeoutMs = timeoutMs || 15000;
+  if(!url || !url.trim()) return [];
+
+  // 1. Jika URL lokal di server, unduh langsung sangat cepat (<50ms)
+  if(!url.startsWith('http://') && !url.startsWith('https://')){
     try{
-      const res = await fetch(targetUrl, {cache:'no-store', signal: controller.signal});
-      clearTimeout(timer);
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      const text = await res.text();
-      return Papa.parse(text, {skipEmptyLines:false}).data;
+      const res = await fetch(url);
+      if(res.ok){
+        const text = await res.text();
+        return Papa.parse(text, {skipEmptyLines:false}).data;
+      }
     }catch(e){
-      clearTimeout(timer);
-      throw e;
+      console.warn('[Kinerja fetch] Local fetch failed:', e);
     }
   }
 
-  try{
-    return await doFetch(url);
-  }catch(errDirect){
-    if(url.startsWith('http://') || url.startsWith('https://')){
-      console.warn('Direct fetch failed, trying proxy...', errDirect.message);
+  // 2. Jika URL eksternal (Google Sheets), prioritaskan proxy backend (anti CORS & anti throttling)
+  if(url.startsWith('http://') || url.startsWith('https://')){
+    try{
       const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
-      return await doFetch(proxyUrl);
+      const res = await fetch(proxyUrl);
+      if(res.ok){
+        const text = await res.text();
+        const parsed = Papa.parse(text, {skipEmptyLines:false}).data;
+        if(parsed && parsed.length >= 2) return parsed;
+      }
+    }catch(err){
+      console.warn('[Kinerja fetch] Proxy fetch failed, trying direct fallback...', err);
     }
-    throw errDirect;
+
+    // 3. Fallback direct fetch jika proxy mengalami kendala
+    try{
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), timeoutMs);
+      const res = await fetch(url, {cache:'no-store', signal: controller.signal});
+      clearTimeout(timer);
+      if(res.ok){
+        const text = await res.text();
+        return Papa.parse(text, {skipEmptyLines:false}).data;
+      }
+    }catch(err){
+      console.warn('[Kinerja fetch] Direct fetch failed too:', err.message);
+    }
   }
+  throw new Error('Gagal mengambil data kinerja transmisi dari sumber');
 }
 
 function diagnosticMessage(err){

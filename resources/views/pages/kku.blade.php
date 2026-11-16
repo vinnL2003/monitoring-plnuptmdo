@@ -600,6 +600,48 @@
 <script>
   const KKU_CSV_URL = (window.APP_DATA_SOURCES && window.APP_DATA_SOURCES.kku_csv) ? window.APP_DATA_SOURCES.kku_csv : null;
 
+  async function fetchKkuCsv(url, timeoutMs){
+    timeoutMs = timeoutMs || 15000;
+    if(!url || !url.trim()) return [];
+    if(!url.startsWith('http://') && !url.startsWith('https://')){
+      try{
+        const res = await fetch(url);
+        if(res.ok){
+          const text = await res.text();
+          return Papa.parse(text, {skipEmptyLines:false}).data;
+        }
+      }catch(e){
+        console.warn('[KKU fetch] Local fetch failed:', e);
+      }
+    }
+    if(url.startsWith('http://') || url.startsWith('https://')){
+      try{
+        const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
+        const res = await fetch(proxyUrl);
+        if(res.ok){
+          const text = await res.text();
+          const parsed = Papa.parse(text, {skipEmptyLines:false}).data;
+          if(parsed && parsed.length >= 2) return parsed;
+        }
+      }catch(err){
+        console.warn('[KKU fetch] Proxy fetch failed, trying direct fallback...', err);
+      }
+      try{
+        const controller = new AbortController();
+        const timer = setTimeout(()=>controller.abort(), timeoutMs);
+        const res = await fetch(url, {cache:'no-store', signal: controller.signal});
+        clearTimeout(timer);
+        if(res.ok){
+          const text = await res.text();
+          return Papa.parse(text, {skipEmptyLines:false}).data;
+        }
+      }catch(err){
+        console.warn('[KKU fetch] Direct fetch failed too:', err.message);
+      }
+    }
+    return [];
+  }
+
   function switchKkuTab(tabId, btn){
     document.querySelectorAll('.kku-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -643,9 +685,7 @@
     }
 
     try{
-      const res = await fetch(KKU_CSV_URL);
-      const text = await res.text();
-      const rows = Papa.parse(text, { skipEmptyLines: true }).data;
+      const rows = await fetchKkuCsv(KKU_CSV_URL);
       if(!rows || rows.length < 2) return;
 
       const headers = rows[0].map(h => (h||'').toString().trim().toLowerCase());

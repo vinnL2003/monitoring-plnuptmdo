@@ -2402,7 +2402,7 @@ async function loadSupplementaryData(mainRowsSlice){
 
 document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
 loadData();
-setInterval(loadData, 5*60*1000);
+setInterval(loadData, 30*60*1000); // Otomatis refresh data di latar belakang setiap 30 menit
 
 function applyThemeUI(theme){
   document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';

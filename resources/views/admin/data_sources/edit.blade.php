@@ -15,6 +15,18 @@
     </div>
   @endif
 
+  @if($dataSource->key === 'konstruksi_penyaluran_csv')
+    <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
+      <div style="font-size:24px; line-height:1;">🔒</div>
+      <div>
+        <h4 style="font-size:13.5px; font-weight:700; color:#1E40AF; margin:0 0 4px;">Status: Menunggu Format File Spreadsheet Contoh</h4>
+        <p style="font-size:12px; color:#1E3A8A; margin:0; line-height:1.6;">
+          Sumber data ini saat ini disetel pada mode <b>Kosong/Terkunci</b> sementara menunggu file spreadsheet contoh resmi dari unit terkait. Data di halaman publik Konstruksi &amp; Penyaluran saat ini disinkronkan otomatis dari menu <b>Konten Halaman Depan ➔ Progres Konstruksi &amp; COD</b>. Ketika file spreadsheet contoh sudah Anda miliki, Anda dapat langsung memilih opsi <b>Google Sheets</b> atau <b>Upload File CSV</b> di bawah ini.
+        </p>
+      </div>
+    </div>
+  @endif
+
   <form action="{{ route('admin.data-sources.update', $dataSource) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')

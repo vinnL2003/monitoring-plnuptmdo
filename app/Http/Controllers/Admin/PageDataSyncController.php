@@ -114,7 +114,7 @@ class PageDataSyncController extends Controller
                 'icon' => '🏗️',
                 'badge' => 'Proyek COD',
                 'description' => 'Progres fisik proyek transmisi baru, Commercial Operation Date (COD), dan Serah Terima Operasi (STO).',
-                'data_source_keys' => [],
+                'data_source_keys' => ['konstruksi_penyaluran_csv'],
             ],
         ];
     }
@@ -220,13 +220,22 @@ class PageDataSyncController extends Controller
             $loadError = "Gagal membaca data: " . $e->getMessage();
         }
 
-        // Jika data masih kosong sama sekali, berikan template default 3 kolom 2 baris
+        // Jika data masih kosong sama sekali, berikan template default
         if (empty($rawRows)) {
-            $headers = ['Kolom_1', 'Kolom_2', 'Kolom_3'];
-            $dataRows = [
-                ['Data Contoh 1', 'Nilai A', 'Keterangan A'],
-                ['Data Contoh 2', 'Nilai B', 'Keterangan B'],
-            ];
+            if ($dataSource->key === 'konstruksi_penyaluran_csv') {
+                $headers = ['Pilar_Pekerjaan', 'Lingkup_Kerja', 'Target', 'Realisasi_Fisik', 'Status'];
+                $dataRows = [
+                    ['Progres Konstruksi SUTT/GI', 'Pembangunan fisik transmisi & GI UPT Manado', '100%', '68%', 'On Track'],
+                    ['Kesiapan Penyaluran (COD)', 'Evakuasi & penyaluran daya pembangkit baru', '100%', '82%', 'On Track'],
+                    ['Serah Terima Aset (STO)', 'Administrasi dan teknis serah terima aset', '100%', '45%', 'Tahap Verifikasi'],
+                ];
+            } else {
+                $headers = ['Kolom_1', 'Kolom_2', 'Kolom_3'];
+                $dataRows = [
+                    ['Data Contoh 1', 'Nilai A', 'Keterangan A'],
+                    ['Data Contoh 2', 'Nilai B', 'Keterangan B'],
+                ];
+            }
         } else {
             // Baris pertama adalah Header
             $headers = $rawRows[0];

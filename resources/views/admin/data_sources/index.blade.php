@@ -71,9 +71,15 @@
                 🌐 Google Sheets
               </span>
             @else
-              <span class="badge" style="background:#F1F5F9; color:#64748B; font-weight:700; padding:4px 9px; border-radius:6px; font-size:11.5px;">
-                🚫 Dikosongkan (Manual)
-              </span>
+              @if($ds->key === 'konstruksi_penyaluran_csv')
+                <span class="badge" style="background:#EFF6FF; color:#1D4ED8; font-weight:700; padding:4px 9px; border-radius:6px; font-size:11.5px;">
+                  🔒 Terkunci (Menunggu Template)
+                </span>
+              @else
+                <span class="badge" style="background:#F1F5F9; color:#64748B; font-weight:700; padding:4px 9px; border-radius:6px; font-size:11.5px;">
+                  🚫 Dikosongkan (Manual)
+                </span>
+              @endif
             @endif
           </td>
           <td>
@@ -86,7 +92,11 @@
                 {{ Str::limit($ds->url, 35) }} ↗
               </a>
             @else
-              <span style="font-size:11.5px; color:var(--text-muted); font-style:italic;">- Dikosongkan -</span>
+              @if($ds->key === 'konstruksi_penyaluran_csv')
+                <span style="font-size:11.5px; color:#1D4ED8; font-style:italic;">🔒 Terkunci (Sesuai Data Home)</span>
+              @else
+                <span style="font-size:11.5px; color:var(--text-muted); font-style:italic;">- Dikosongkan -</span>
+              @endif
             @endif
           </td>
           <td>

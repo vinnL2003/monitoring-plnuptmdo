@@ -314,50 +314,76 @@
     </div>
   </div>
 
-  <!-- TOP KPI METRIC CARDS -->
+  @php
+    $secKonstr = $sections['konstruksi'] ?? null;
+    $pItems = $secKonstr?->progressItems ?? collect();
+    $sCards = $secKonstr?->statCards ?? collect();
+
+    // 1. Progres Konstruksi SUTT/GI (sinkron dengan Home)
+    $itemSutt = $pItems->firstWhere('title', 'Progres Konstruksi SUTT/GI') ?? $sCards->firstWhere('title', 'Progres Konstruksi SUTT/GI');
+    $valSutt = $itemSutt ? ($itemSutt->percentage !== null ? round($itemSutt->percentage) . '%' : ($itemSutt->effective_value ?? '68%')) : '68%';
+    $descSutt = $itemSutt->description ?? ($itemSutt->effective_footer ?? 'Penyelesaian proyek konstruksi jaringan transmisi & GI');
+
+    // 2. Kesiapan Penyaluran (COD) (sinkron dengan Home)
+    $itemCod = $pItems->firstWhere('title', 'Kesiapan Penyaluran (COD)') ?? $sCards->firstWhere('title', 'Kesiapan Penyaluran (COD)');
+    $valCod = $itemCod ? ($itemCod->percentage !== null ? round($itemCod->percentage) . '%' : ($itemCod->effective_value ?? '82%')) : '82%';
+    $descCod = $itemCod->description ?? ($itemCod->effective_footer ?? 'Kesiapan penyaluran tenaga listrik pembangkit baru');
+
+    // 3. Serah Terima Aset (STO) (sinkron dengan Home)
+    $itemSto = $pItems->firstWhere('title', 'Serah Terima Aset (STO)') ?? $sCards->firstWhere('title', 'Serah Terima Aset (STO)');
+    $valSto = $itemSto ? ($itemSto->percentage !== null ? round($itemSto->percentage) . '%' : ($itemSto->effective_value ?? '45%')) : '45%';
+    $descSto = $itemSto->description ?? ($itemSto->effective_footer ?? 'Progres administrasi dan teknis STO');
+
+    $numSutt = floatval(str_replace(['%',' '], '', $valSutt)) ?: 68;
+    $numCod = floatval(str_replace(['%',' '], '', $valCod)) ?: 82;
+    $numSto = floatval(str_replace(['%',' '], '', $valSto)) ?: 45;
+    $avgProgress = round(($numSutt + $numCod + $numSto) / 3, 1) . '%';
+  @endphp
+
+  <!-- TOP KPI METRIC CARDS (SINKRON DENGAN DATA HALAMAN HOME) -->
   <div class="kp-metrics-grid">
     <div class="kp-metric-card">
       <div class="km-info">
-        <h4>Proyek On-Going</h4>
-        <div class="val">6 Proyek</div>
-        <div class="sub">Transmisi &amp; Gardu Induk Aktif</div>
+        <h4>Progres Konstruksi SUTT/GI</h4>
+        <div class="val">{{ $valSutt }}</div>
+        <div class="sub">{{ $descSutt }}</div>
       </div>
       <div class="km-icon">🏗️</div>
     </div>
 
     <div class="kp-metric-card">
       <div class="km-info">
-        <h4>Target COD 2026</h4>
-        <div class="val">4 Sistem</div>
-        <div class="sub">Kesiapan Energize &amp; Penyaluran</div>
+        <h4>Kesiapan Penyaluran (COD)</h4>
+        <div class="val">{{ $valCod }}</div>
+        <div class="sub">{{ $descCod }}</div>
       </div>
       <div class="km-icon">🔗</div>
     </div>
 
     <div class="kp-metric-card">
       <div class="km-info">
-        <h4>Rata-rata Fisik</h4>
-        <div class="val">74.8%</div>
-        <div class="sub">Kumulatif Seluruh Paket UIP</div>
+        <h4>Serah Terima Aset (STO)</h4>
+        <div class="val">{{ $valSto }}</div>
+        <div class="sub">{{ $descSto }}</div>
       </div>
-      <div class="km-icon">📊</div>
+      <div class="km-icon">📋</div>
     </div>
 
     <div class="kp-metric-card">
       <div class="km-info">
-        <h4>Progres STO</h4>
-        <div class="val">3 Paket</div>
-        <div class="sub">Tahap Verifikasi Dokumen Teknis</div>
+        <h4>Rata-rata Akumulasi</h4>
+        <div class="val">{{ $avgProgress }}</div>
+        <div class="sub">Rata-rata 3 Pilar Utama Home</div>
       </div>
-      <div class="km-icon">📋</div>
+      <div class="km-icon">📊</div>
     </div>
   </div>
 
-  <!-- SUMMARY PROGRESS BARS SECTION (FROM CMS / DATABASE) -->
+  <!-- SUMMARY PROGRESS BARS SECTION (FROM CMS / DATABASE SINKRON HOME) -->
   <div class="summary-progress-box">
     <div class="spb-header">
       <h3>Ringkasan Pilar Konstruksi &amp; Kesiapan Penyaluran UPT Manado</h3>
-      <p>Data integrasi sinkronisasi progres utama ketenagalistrikan wilayah Sulawesi Utara dan Gorontalo.</p>
+      <p>Data integrasi sinkronisasi progres utama ketenagalistrikan wilayah Sulawesi Utara dan Gorontalo (sesuai halaman Home).</p>
     </div>
     <div class="grid-3">
       @if(isset($sections['konstruksi']->progressItems) && count($sections['konstruksi']->progressItems) > 0)
@@ -370,9 +396,23 @@
           </div>
         @endforeach
       @else
-        <div style="grid-column:1/-1; padding:35px 20px; text-align:center; color:var(--text-muted); background:var(--bg-card); border:1px dashed var(--border-color); border-radius:8px;">
-          <div style="font-size:28px; margin-bottom:8px;">🏗️</div>
-          Belum ada item progres pilar konstruksi &amp; penyaluran yang aktif.
+        <div class="ultg-card">
+          <div class="ultg-title">🏗️ Progres Konstruksi SUTT/GI</div>
+          <div class="ultg-desc">Persentase penyelesaian proyek konstruksi jaringan transmisi &amp; gardu induk yang sedang berjalan.</div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:68%"></div></div>
+          <div class="progress-label"><span>Progres Realisasi</span><span style="font-weight:700;">68%</span></div>
+        </div>
+        <div class="ultg-card">
+          <div class="ultg-title">🔗 Kesiapan Penyaluran (COD)</div>
+          <div class="ultg-desc">Kesiapan penyaluran tenaga listrik dari pembangkit baru menuju jaringan sistem transmisi Sulutgo.</div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:82%"></div></div>
+          <div class="progress-label"><span>Progres Realisasi</span><span style="font-weight:700;">82%</span></div>
+        </div>
+        <div class="ultg-card">
+          <div class="ultg-title">📋 Serah Terima Aset (STO)</div>
+          <div class="ultg-desc">Progres administrasi dan teknis serah terima operasi aset baru dari unit konstruksi ke unit transmisi.</div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:45%"></div></div>
+          <div class="progress-label"><span>Progres Realisasi</span><span style="font-weight:700;">45%</span></div>
         </div>
       @endif
     </div>
@@ -380,111 +420,82 @@
 
   <!-- NAVIGATION TABS -->
   <div class="kp-tabs-bar">
-    <button class="kp-tab-btn active" onclick="switchKpTab('tab-proyek', this)">1. Daftar Proyek Konstruksi Strategis</button>
+    <button class="kp-tab-btn active" onclick="switchKpTab('tab-proyek', this)">1. Daftar Proyek &amp; Capaian Pilar</button>
     <button class="kp-tab-btn" onclick="switchKpTab('tab-cod', this)">2. Kesiapan Penyaluran &amp; Uji COD</button>
     <button class="kp-tab-btn" onclick="switchKpTab('tab-sto', this)">3. Tata Kelola &amp; Prosedur STO</button>
-    <button class="kp-tab-btn" onclick="switchKpTab('tab-wilayah', this)">4. Distribusi Proyek per Wilayah ULTG</button>
+    <button class="kp-tab-btn" onclick="switchKpTab('tab-wilayah', this)">4. Distribusi Pilar per Wilayah ULTG</button>
   </div>
 
   <!-- TAB 1: DAFTAR PROYEK KONSTRUKSI -->
   <div id="tab-proyek" class="tab-pane active">
+    <!-- INFO STATUS SUMBER DATA TERKUNCI -->
+    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:flex-start; gap:14px; box-shadow:var(--card-shadow);">
+      <div style="font-size:30px; line-height:1;">🔒</div>
+      <div>
+        <h4 style="font-size:14px; font-weight:700; color:var(--text-main); margin:0 0 4px;">Integrasi Rincian Spreadsheet Proyek Sedang Disiapkan</h4>
+        <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 8px; line-height:1.6;">
+          Format file spreadsheet rincian proyek konstruksi saat ini dikunci sementara sambil menunggu file spreadsheet contoh resmi dari unit terkait. Data di bawah ini mengacu langsung pada <b>3 Pilar Utama Konstruksi &amp; Penyaluran</b> yang aktif di halaman Home.
+        </p>
+        <span style="display:inline-block; font-size:11.5px; background:rgba(0,82,156,0.08); color:var(--pln-blue); font-weight:700; padding:3px 10px; border-radius:12px;">
+          Kode Sumber Data Admin: <code>konstruksi_penyaluran_csv</code>
+        </span>
+      </div>
+    </div>
+
     <div class="kp-table-card">
       <div class="kp-table-header">
-        <h3>Monitoring Pekerjaan Fisik Proyek Transmisi &amp; Gardu Induk</h3>
-        <span style="font-size:12px; color:var(--text-muted);">Kerjasama Unit Induk Pembangunan (UIP) &amp; UPT Manado</span>
+        <h3>Tabel Monitoring Progres Pilar Utama Konstruksi, COD &amp; STO</h3>
+        <span style="font-size:12px; color:var(--text-muted);">Disinkronkan dari data Halaman Home &amp; Panel Admin</span>
       </div>
       <div class="table-responsive">
         <table class="kp-table">
           <thead>
             <tr>
               <th>No</th>
-              <th>Nama Proyek &amp; Ruang Lingkup</th>
-              <th>Wilayah Kerja</th>
-              <th>Target COD</th>
-              <th style="text-align:right;">Target Fisik</th>
-              <th style="text-align:right;">Realisasi Fisik</th>
+              <th>Pilar Kunci Pekerjaan</th>
+              <th>Ruang Lingkup &amp; Wilayah Kerja</th>
+              <th>Target</th>
+              <th style="text-align:right;">Realisasi Progres</th>
               <th>Status</th>
-              <th>Isu Utama &amp; Rencana Mitigasi</th>
+              <th>Keterangan Operasional</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="proyek-tbody">
             <tr>
               <td>1</td>
               <td>
-                <b>SUTT 150 kV Likupang - Paniki</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">56 Tower · 18,5 kms · Kawasan Ekonomi Khusus (KEK)</span>
+                <b>Progres Konstruksi SUTT/GI</b><br>
+                <span style="font-size:11.5px; color:var(--text-muted);">Pembangunan fisik jaringan Saluran Udara Tegangan Tinggi &amp; Gardu Induk</span>
               </td>
-              <td>ULTG Sawangan</td>
-              <td>TW III 2026</td>
-              <td style="text-align:right;">85.0%</td>
-              <td style="text-align:right; font-weight:700; color:#27AE60;">88.2%</td>
+              <td>Wilayah Kerja PLN UPT Manado</td>
+              <td>100%</td>
+              <td style="text-align:right; font-weight:700; color:#27AE60;">{{ $valSutt }}</td>
               <td><span class="status-pill status-ontrack">On Track</span></td>
-              <td>Penyelesaian stringing 4 span terakhir di sekitar ring road Manado Utara.</td>
+              <td>{{ $descSutt }}</td>
             </tr>
             <tr>
               <td>2</td>
               <td>
-                <b>GI 150 kV Belang (30 MVA) &amp; Incomer</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">Trafo 1x30 MVA · 4 Bay Line SUTT</span>
+                <b>Kesiapan Penyaluran (COD)</b><br>
+                <span style="font-size:11.5px; color:var(--text-muted);">Commercial Operation Date &amp; evakuasi daya pembangkit ke transmisi</span>
               </td>
-              <td>ULTG Lopana</td>
-              <td>TW IV 2026</td>
-              <td style="text-align:right;">70.0%</td>
-              <td style="text-align:right; font-weight:700; color:#27AE60;">72.5%</td>
+              <td>Sistem Interkoneksi Sulutgo</td>
+              <td>100%</td>
+              <td style="text-align:right; font-weight:700; color:#27AE60;">{{ $valCod }}</td>
               <td><span class="status-pill status-ontrack">On Track</span></td>
-              <td>Pemasangan struktur gantry dan pondasi trafo utama telah selesai 100%.</td>
+              <td>{{ $descCod }}</td>
             </tr>
             <tr>
               <td>3</td>
               <td>
-                <b>Uprating Konduktor SUTT 150 kV Sawangan - Tomohon</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">32 kms · Penggantian ke Konduktor Kapasitas Tinggi (ACCC)</span>
+                <b>Serah Terima Aset (STO)</b><br>
+                <span style="font-size:11.5px; color:var(--text-muted);">Administrasi dan verifikasi teknis serah terima aset dari UIP ke UPT</span>
               </td>
-              <td>ULTG Sawangan / Lopana</td>
-              <td>TW II 2026</td>
-              <td style="text-align:right;">65.0%</td>
-              <td style="text-align:right; font-weight:700; color:#D9A400;">61.4%</td>
-              <td><span class="status-pill status-caution">Hati-hati</span></td>
-              <td>Perlu penjadwalan pemadaman terencana (outage window) yang ketat bersama ACC.</td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td>
-                <b>Extension Bay Trafo 60 MVA GI 150 kV Lopana</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">Trafo #2 60 MVA · Suplai Konsumen Industri Amurang</span>
-              </td>
-              <td>ULTG Lopana</td>
-              <td>TW III 2026</td>
-              <td style="text-align:right;">80.0%</td>
-              <td style="text-align:right; font-weight:700; color:#27AE60;">84.0%</td>
-              <td><span class="status-pill status-ontrack">On Track</span></td>
-              <td>Pengiriman transformator daya dari pabrikan telah tiba di site pelabuhan Bitung.</td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td>
-                <b>SUTT 150 kV Isimu - Marisa (Section 2)</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">112 kms · 320 Tower · Transmisi Gorontalo Barat</span>
-              </td>
-              <td>ULTG Gorontalo</td>
-              <td>TW IV 2026</td>
-              <td style="text-align:right;">75.0%</td>
-              <td style="text-align:right; font-weight:700; color:#D9A400;">69.0%</td>
-              <td><span class="status-pill status-caution">Hati-hati</span></td>
-              <td>Kendala pembebasan lahan RoW di 6 titik tower perbukitan Boalemo; mediasi bersama Forkopimda.</td>
-            </tr>
-            <tr>
-              <td>6</td>
-              <td>
-                <b>GI 150 kV Malalayang (60 MVA)</b><br>
-                <span style="font-size:11.5px; color:var(--text-muted);">GIS Substation · Peningkatan Keandalan Pusat Kota Manado</span>
-              </td>
-              <td>ULTG Sawangan</td>
-              <td>TW I 2027</td>
-              <td style="text-align:right;">40.0%</td>
-              <td style="text-align:right; font-weight:700; color:#27AE60;">42.8%</td>
-              <td><span class="status-pill status-ontrack">On Track</span></td>
-              <td>Pekerjaan sipil gedung kontrol dan basement kabel tanah 150 kV sedang berlangsung.</td>
+              <td>Aset Baru UPT Manado</td>
+              <td>100%</td>
+              <td style="text-align:right; font-weight:700; color:#D9A400;">{{ $valSto }}</td>
+              <td><span class="status-pill status-caution">Tahap Verifikasi</span></td>
+              <td>{{ $descSto }}</td>
             </tr>
           </tbody>
         </table>
@@ -677,36 +688,36 @@
       <div class="ultg-card">
         <div class="ultg-title">🏢 ULTG Sawangan</div>
         <div class="ultg-desc">
-          Fokus pada keandalan ring Kota Manado dan KEK Likupang:
+          Fokus wilayah keandalan transmisi ring Kota Manado &amp; KEK Likupang:
         </div>
         <ul style="font-size:12px; color:var(--text-muted); margin-left:18px; line-height:1.7;">
-          <li>Pembangunan SUTT 150 kV Likupang - Paniki (On Track 88%).</li>
-          <li>Pembangunan GIS 150 kV Malalayang Manado (Tahap Sipil 42%).</li>
-          <li>Uprating Konduktor jalur evakuasi PLTA Tonsea Lama (Tahap 1 Selesai).</li>
+          <li>Pembangunan jalur transmisi SUTT 150 kV Likupang - Paniki.</li>
+          <li>Pembangunan GIS 150 kV Malalayang Manado.</li>
+          <li>Uprating konduktor jalur evakuasi daya sistem Manado.</li>
         </ul>
       </div>
 
       <div class="ultg-card">
         <div class="ultg-title">🏢 ULTG Lopana</div>
         <div class="ultg-desc">
-          Fokus pada kawasan industri Minahasa Selatan dan Minahasa Tenggara:
+          Fokus wilayah Minahasa Selatan &amp; Minahasa Tenggara:
         </div>
         <ul style="font-size:12px; color:var(--text-muted); margin-left:18px; line-height:1.7;">
-          <li>Pembangunan GI 150 kV Belang 30 MVA (Konstruksi 72%).</li>
-          <li>Penambahan Trafo #2 60 MVA di GI 150 kV Lopana (84%).</li>
-          <li>Rekonfigurasi bay line SUTT 150 kV Lopana - Kawangkoan.</li>
+          <li>Pembangunan GI 150 kV Belang (30 MVA) &amp; incomer.</li>
+          <li>Penambahan kapasitas trafo daya GI 150 kV Lopana.</li>
+          <li>Penguatan keandalan bay line penghubung antar gardu.</li>
         </ul>
       </div>
 
       <div class="ultg-card">
         <div class="ultg-title">🏢 ULTG Kotamobagu &amp; Gorontalo</div>
         <div class="ultg-desc">
-          Fokus pada interkoneksi antar provinsi Sulut - Gorontalo:
+          Fokus interkoneksi antar provinsi Sulut - Gorontalo:
         </div>
         <ul style="font-size:12px; color:var(--text-muted); margin-left:18px; line-height:1.7;">
-          <li>SUTT 150 kV Isimu - Marisa Gorontalo Barat (Tahap Tower 69%).</li>
-          <li>Perkuatan gardu hubung GI 150 kV Otam Kotamobagu.</li>
-          <li>Kesiapan evakuasi daya PLTM / EBT di Bolaang Mongondow.</li>
+          <li>Pembangunan jalur transmisi SUTT 150 kV Isimu - Marisa.</li>
+          <li>Perkuatan keandalan gardu hubung interkoneksi regional.</li>
+          <li>Kesiapan evakuasi daya pembangkit EBT daerah.</li>
         </ul>
       </div>
     </div>

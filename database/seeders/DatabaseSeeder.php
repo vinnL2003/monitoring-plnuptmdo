@@ -128,6 +128,14 @@ class DatabaseSeeder extends Seeder
                 'url' => 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRx2dxv5UCa5R84BkO9cOzfUfXZ1Yr_fBTDfC_Bxn5fvXpsk6Gt2QrrAWdO_MrsIA/pub?output=csv',
                 'description' => 'Data penyerapan anggaran investasi dan operasi UPT Manado.',
             ],
+            [
+                'name' => 'Data Progres Konstruksi & Penyaluran (COD)',
+                'key' => 'konstruksi_penyaluran_csv',
+                'source_type' => 'none',
+                'url' => null,
+                'file_path' => null,
+                'description' => 'Sumber data proyek konstruksi, kesiapan COD, dan STO. (Status: Terkunci sementara, menunggu file spreadsheet contoh).',
+            ],
         ];
 
         foreach ($dataSources as $ds) {

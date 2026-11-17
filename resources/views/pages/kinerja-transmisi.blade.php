@@ -995,22 +995,22 @@ function renderMonthCombo(monthCounts){
 
   const datasets = [
     { type:'bar', label:'Frekuensi 2026', data: freq, backgroundColor: isDark ? '#FFC72C' : '#00529C', order:2, yAxisID:'y', _glow: isDark ? '#FFC72C' : '#00529C', pointStyle:'rect',
-      datalabels:{ display:true, color: isDark ? '#FFF6DC' : '#0A2540', anchor:'end', align:'end', font:{size:9,weight:'700'} } },
-    { type:'line', label:'Kumulatif 2026', data: buildCumulative(freq, cutoff), borderColor: isDark ? '#B8860B' : '#00386C', backgroundColor: isDark ? '#B8860B' : '#00386C', tension:0.3, order:1, yAxisID:'y', spanGaps:false, borderWidth:2, pointRadius:2, pointHoverRadius:4, _glow: isDark ? '#B8860B' : '#00386C', pointStyle:'line',
-      datalabels:{ display:true, color: isDark ? '#FFE28A' : '#00386C', anchor:'end', align:'top', font:{size:9,weight:'700'} } }
+      datalabels:{ display:true, color: isDark ? '#FFFFFF' : '#0A2540', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 2, font:{size:9.5,weight:'800'} } },
+    { type:'line', label:'Kumulatif 2026', data: buildCumulative(freq, cutoff), borderColor: isDark ? '#38BDF8' : '#00386C', backgroundColor: isDark ? '#38BDF8' : '#00386C', tension:0.3, order:1, yAxisID:'y', spanGaps:false, borderWidth:2.5, pointRadius:2.5, pointHoverRadius:4, _glow: isDark ? '#38BDF8' : '#00386C', pointStyle:'line',
+      datalabels:{ display:true, color: isDark ? '#38BDF8' : '#00386C', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 4, font:{size:9.5,weight:'800'} } }
   ];
 
   if(show2025 && STATE.foisPrevData && STATE.foisPrevData[2025]){
     datasets.push({ type:'bar', label:'Frekuensi 2025', data: STATE.foisPrevData[2025].freq, backgroundColor:'rgba(39,174,96,0.8)', order:3, yAxisID:'y', _glow:'#27AE60', pointStyle:'rect',
-      datalabels:{ display:true, color: isDark ? '#C8F5D8' : '#1E5631', anchor:'end', align:'end', font:{size:9,weight:'700'} } });
+      datalabels:{ display:true, color: isDark ? '#34D399' : '#15803D', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 2, font:{size:9,weight:'800'} } });
     datasets.push({ type:'line', label:'Kumulatif 2025', data: buildCumulative(STATE.foisPrevData[2025].freq, null), borderColor:'rgba(20,90,50,0.8)', backgroundColor:'rgba(20,90,50,0.8)', tension:0.3, order:1, yAxisID:'y', borderWidth:2, pointRadius:2, pointHoverRadius:4, _glow:'#1E5631', pointStyle:'line',
-      datalabels:{ display:true, color: isDark ? '#8CF0B0' : '#1E5631', anchor:'end', align:'top', font:{size:9,weight:'700'} } });
+      datalabels:{ display:true, color: isDark ? '#34D399' : '#15803D', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 4, font:{size:9,weight:'800'} } });
   }
   if(show2024 && STATE.foisPrevData && STATE.foisPrevData[2024]){
     datasets.push({ type:'bar', label:'Frekuensi 2024', data: STATE.foisPrevData[2024].freq, backgroundColor:'rgba(230,126,34,0.8)', order:4, yAxisID:'y', _glow:'#E67E22', pointStyle:'rect',
-      datalabels:{ display:true, color: isDark ? '#FFE3C2' : '#B4620F', anchor:'end', align:'end', font:{size:9,weight:'700'} } });
+      datalabels:{ display:true, color: isDark ? '#FB923C' : '#C2410C', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 2, font:{size:9,weight:'800'} } });
     datasets.push({ type:'line', label:'Kumulatif 2024', data: buildCumulative(STATE.foisPrevData[2024].freq, null), borderColor:'rgba(180,90,20,0.8)', backgroundColor:'rgba(180,90,20,0.8)', tension:0.3, order:1, yAxisID:'y', borderWidth:2, pointRadius:2, pointHoverRadius:4, _glow:'#B4620F', pointStyle:'line',
-      datalabels:{ display:true, color: isDark ? '#FFC98A' : '#B4620F', anchor:'end', align:'top', font:{size:9,weight:'700'} } });
+      datalabels:{ display:true, color: isDark ? '#FB923C' : '#C2410C', textStrokeColor: isDark ? '#0F172A' : '#FFFFFF', textStrokeWidth: 2.5, anchor:'end', align:'top', offset: 4, font:{size:9,weight:'800'} } });
   }
 
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
@@ -1213,6 +1213,16 @@ function extractKpiMonthly(rows, code, opts){
   return { code, polarity, target, realisasi, prognosaLine, activeIdx };
 }
 
+function formatKpiVal(v){
+  if(v === null || v === undefined || isNaN(v)) return '';
+  const num = Number(v);
+  if(num === 0) return '0';
+  if(Number.isInteger(num)) return num.toString();
+  if(Math.abs(num) < 0.01) return parseFloat(num.toFixed(4)).toString();
+  if(Math.abs(num) < 1) return parseFloat(num.toFixed(3)).toString();
+  return parseFloat(num.toFixed(2)).toString();
+}
+
 function renderKpiComboChart(canvasId, data, yRange){
   const canvasElForMsg = document.getElementById(canvasId);
   if(!data){
@@ -1229,14 +1239,19 @@ function renderKpiComboChart(canvasId, data, yRange){
   const tickColor = isDark ? '#94A3B8' : '#6C7A89';
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const barColor = isDark ? '#FFC72C' : '#00529C';
-  const lineColor = isDark ? '#2DD4BF' : '#D9A400';
+  const lineColor = isDark ? '#38BDF8' : '#D97706'; // Cyan di dark mode, Amber kontras tinggi di light mode
 
   // Warna Grafik Area mengikuti polaritas (kolom D / POL):
-  // ⬆️ = merah (naik = baik), ⬇️ = hijau (turun = baik), ↔️ = hijau dengan pita batas bawah 95% target
+  // ⬆️ = merah transparan (area di bawah target adalah warning/kurang), ⬇️ / ↔️ = hijau transparan
   const isDown = /⬇️/.test(data.polarity || '');
   const isRange = /↔️/.test(data.polarity || '');
-  const areaBorder = (isDown || isRange) ? 'rgba(39,174,96,0.5)' : 'rgba(231,76,60,0.5)';
-  const areaLabelColor = (isDown || isRange) ? (isDark ? '#C8F5D8' : '#1E5631') : (isDark ? '#FFD9D6' : '#7A1F16');
+  const areaColor = (isDown || isRange)
+    ? (isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.16)')
+    : (isDark ? 'rgba(239, 68, 68, 0.20)' : 'rgba(239, 68, 68, 0.14)');
+  const areaBorder = (isDown || isRange) ? '#10B981' : '#EF4444';
+  const areaLabelColor = (isDown || isRange)
+    ? (isDark ? '#34D399' : '#047857')
+    : (isDark ? '#F87171' : '#B91C1C');
 
   destroyChart(canvasId);
   const canvas = document.getElementById(canvasId);
@@ -1270,26 +1285,83 @@ function renderKpiComboChart(canvasId, data, yRange){
     targetFill = 0; // isi area relatif ke dataset index 0 (batas bawah) di atas
   }
 
+  // 1. DATASET TARGET (Area & Garis Target)
   datasets.push({
     type:'line', label:'Target', data:data.target,
-    borderColor:areaBorder, backgroundColor:areaBorder,
-    fill:targetFill, tension:0, borderWidth:1, pointRadius:0, order:3, pointStyle:'rect',
+    borderColor:areaBorder, backgroundColor:areaColor,
+    fill:targetFill, tension:0, borderWidth:1.5, pointRadius:0, order:3, pointStyle:'rect',
     datalabels:{
-      display:(ctx)=> ctx.dataIndex === 11, // label hanya di Desember (hindari tumpang tindih dengan bar)
-      color:areaLabelColor, anchor:'end', align:'top', font:{size:9,weight:'700'}
+      display: (ctx) => {
+        // Tampilkan label target di bulan Desember jika ada datanya
+        return ctx.dataIndex === 11 && ctx.dataset.data[11] !== null && ctx.dataset.data[11] !== undefined;
+      },
+      formatter: (val) => '🎯 ' + formatKpiVal(val),
+      color: areaLabelColor,
+      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+      borderColor: areaBorder,
+      borderWidth: 1.5,
+      borderRadius: 4,
+      padding: { top: 2, bottom: 2, left: 5, right: 5 },
+      font: { size: 9.5, weight: '800' },
+      anchor: 'end',
+      // Anti-tabrakan cerdas: jika bar realisasi lebih tinggi dari garis target, geser badge target ke bawah garis
+      align: (ctx) => {
+        const bVal = barData[11];
+        const tVal = ctx.dataset.data[11];
+        if (bVal !== null && bVal !== undefined) {
+          return bVal >= tVal ? 'bottom' : 'top';
+        }
+        return 'top';
+      },
+      offset: 6
     }
   });
+
+  // 2. DATASET REALISASI (Bar Bulanan)
   datasets.push({
     type:'bar', label:'Realisasi Bulanan', data:barData, backgroundColor:barColor, order:2, _glow:barColor, pointStyle:'rect',
-    datalabels:{ display:true, color: isDark ? '#FFF6DC' : '#0A2540', anchor:'end', align:'end', font:{size:9,weight:'700'} }
+    datalabels:{
+      display: (ctx) => ctx.dataset.data[ctx.dataIndex] !== null && ctx.dataset.data[ctx.dataIndex] !== undefined,
+      formatter: (val) => formatKpiVal(val),
+      color: isDark ? '#FFFFFF' : '#0F172A',
+      font: { size: 9.5, weight: '800' },
+      anchor: 'end',
+      align: 'top',
+      offset: 3,
+      // Efek halo/stroke outline agar angka selalu kontras tajam di atas warna apa pun
+      textStrokeColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      textStrokeWidth: 3
+    }
   });
+
+  // 3. DATASET PROGNOSA (Garis Putus-Putus)
   datasets.push({
     type:'line', label:'Prognosa', data:data.prognosaLine,
-    borderColor:lineColor, backgroundColor:lineColor, borderDash:[6,4],
+    borderColor:lineColor, backgroundColor:lineColor, borderDash:[5,3],
     tension:0, borderWidth:2, pointRadius:2, order:1, _glow:lineColor, pointStyle:'line',
     datalabels:{
-      display:(ctx)=> ctx.dataIndex === 11, // label hanya di Desember
-      color: isDark ? '#B6FFF3' : '#7A5A00', anchor:'end', align:'top', font:{size:9,weight:'700'}
+      display: (ctx) => {
+        if(ctx.dataIndex !== 11) return false;
+        const pVal = ctx.dataset.data[11];
+        if(pVal === null || pVal === undefined) return false;
+        const bVal = barData[11];
+        // JIKA nilai prognosa di Des sama dengan nilai bar realisasi (atau selisih < 0.001), sembunyikan agar TIDAK TUMPANG TINDIH
+        if(bVal !== null && bVal !== undefined && Math.abs(pVal - bVal) < 0.001){
+          return false;
+        }
+        return true;
+      },
+      formatter: (val) => '📈 ' + formatKpiVal(val),
+      color: isDark ? '#38BDF8' : '#D97706',
+      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+      borderColor: isDark ? '#38BDF8' : '#D97706',
+      borderWidth: 1.5,
+      borderRadius: 4,
+      padding: { top: 2, bottom: 2, left: 5, right: 5 },
+      font: { size: 9.5, weight: '800' },
+      anchor: 'end',
+      align: 'top',
+      offset: 6
     }
   });
 
@@ -1299,20 +1371,20 @@ function renderKpiComboChart(canvasId, data, yRange){
     options:{
       responsive:true, maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
-      layout:{ padding:{ top:20 } },
+      layout:{ padding:{ top:28, right:12, bottom:4, left:6 } },
       plugins:{
         legend:{
           display:true, position:'bottom',
           labels:{ color:tickColor, font:{size:10}, usePointStyle:true, pointStyleWidth:22, filter: (item)=> !item.text.startsWith('_') }
         },
         tooltip:{ usePointStyle:true, boxWidth:14, boxHeight:14 },
-        datalabels:{ display:false }
+        datalabels:{ display:false } // diatur per dataset
       },
       scales:{
         x:{ grid:{display:false}, ticks:{color:tickColor, font:{size:10}} },
         y:{
           grid:{color:gridColor}, ticks:{color:tickColor, font:{size:10}},
-          ...(yRange ? {min:yRange[0], ...(yRange[1] != null ? {max:yRange[1]} : {})} : {grace:'10%'})
+          ...(yRange ? {min:yRange[0], ...(yRange[1] != null ? {max:yRange[1]} : {grace:'15%'})} : {grace:'15%'})
         }
       }
     },

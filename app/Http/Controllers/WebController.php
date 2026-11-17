@@ -17,6 +17,7 @@ class WebController extends Controller
 {
     protected function getSharedData(): array
     {
+        DataSource::ensureDefaults();
         $settings = SiteSetting::all()->pluck('value', 'key')->toArray();
         $navItems = NavigationItem::where('is_active', true)->orderBy('order')->get();
         $dataSources = DataSource::all()->mapWithKeys(function ($ds) {

@@ -14,6 +14,7 @@ class DataSourceController extends Controller
 {
     public function index()
     {
+        DataSource::ensureDefaults();
         $dataSources = DataSource::orderBy('created_at', 'asc')->get();
         return view('admin.data_sources.index', compact('dataSources'));
     }

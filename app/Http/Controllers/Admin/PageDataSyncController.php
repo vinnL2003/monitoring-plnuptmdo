@@ -124,6 +124,7 @@ class PageDataSyncController extends Controller
      */
     public function index()
     {
+        DataSource::ensureDefaults();
         $allDataSources = DataSource::all()->keyBy('key');
         $catalog = $this->getPageCatalog();
 

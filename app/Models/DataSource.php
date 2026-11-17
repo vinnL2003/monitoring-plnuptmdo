@@ -84,5 +84,28 @@ class DataSource extends Model
         $source = static::where('key', $key)->where('is_active', true)->first();
         return $source ? $source->effective_url : $default;
     }
+
+    /**
+     * Memastikan seluruh sumber data bawaan sistem selalu ada di database (Self-Healing)
+     * Otomatis membuat baris database bila belum ada saat halaman dibuka di hosting/server.
+     */
+    public static function ensureDefaults(): void
+    {
+        try {
+            static::firstOrCreate(
+                ['key' => 'konstruksi_penyaluran_csv'],
+                [
+                    'name' => 'Data Progres Konstruksi & Penyaluran (COD)',
+                    'source_type' => 'none',
+                    'url' => null,
+                    'file_path' => null,
+                    'description' => 'Sumber data proyek konstruksi, kesiapan COD, dan STO. (Status: Terkunci sementara, menunggu file spreadsheet contoh).',
+                    'is_active' => true,
+                ]
+            );
+        } catch (\Throwable $e) {
+            // Abaikan jika migrasi/koneksi database belum siap
+        }
+    }
 }
 

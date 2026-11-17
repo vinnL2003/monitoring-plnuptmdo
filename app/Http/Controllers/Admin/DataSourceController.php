@@ -230,7 +230,8 @@ class DataSourceController extends Controller
             }
 
             // Mode URL Google Sheet
-            if (!$dataSource->url) {
+            $targetUrl = $dataSource->effective_url ?: DataSource::normalizeGoogleUrl($dataSource->url ?? '');
+            if (empty($targetUrl)) {
                 return back()->with('error', "URL sumber data belum diisi.");
             }
 
@@ -241,7 +242,7 @@ class DataSourceController extends Controller
                 ])
                 ->timeout(25)
                 ->retry(2, 500)
-                ->get($dataSource->url);
+                ->get($targetUrl);
 
             if ($response->successful()) {
                 $body = $response->body();

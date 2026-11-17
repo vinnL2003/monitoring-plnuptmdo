@@ -2211,14 +2211,14 @@ function populatePeriodDropdown(monthCode){
 
 // Ambil satu sumber CSV dengan retry ringan (1x ulang bila gagal), supaya tidak mudah gugur
 // akibat rate-limit sesaat dari Google Sheets ketika banyak request bersamaan.
-async function fetchCsv(url, timeoutMs){
+async function fetchCsv(url, timeoutMs, forceRefresh){
   timeoutMs = timeoutMs || 15000;
   if(!url || !url.trim()) return [];
 
   // 1. Jika URL lokal di server, unduh langsung sangat cepat (<50ms)
   if(!url.startsWith('http://') && !url.startsWith('https://')){
     try{
-      const res = await fetch(url);
+      const res = await fetch(url + (forceRefresh ? (url.includes('?') ? '&' : '?') + '_t=' + Date.now() : ''));
       if(res.ok){
         const text = await res.text();
         return Papa.parse(text, {skipEmptyLines:false}).data;
@@ -2231,10 +2231,16 @@ async function fetchCsv(url, timeoutMs){
   // 2. Jika URL eksternal (Google Sheets), prioritaskan proxy backend (anti CORS & anti throttling)
   if(url.startsWith('http://') || url.startsWith('https://')){
     try{
-      const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url);
+      const refreshParam = forceRefresh ? '&refresh=1&_t=' + Date.now() : '';
+      const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(url) + refreshParam;
       const res = await fetch(proxyUrl);
       if(res.ok){
         const text = await res.text();
+        const trimmed = text.trim();
+        if(trimmed.startsWith('<!DOCTYPE html') || trimmed.startsWith('<html') || trimmed.startsWith('<?xml')){
+          console.warn('[Kinerja fetch] Received HTML instead of CSV from proxy');
+          throw new Error('Respons dari tautan bukan berupa data CSV mentah (berupa halaman web HTML). Pastikan spreadsheet diset Siapa saja dengan link dapat melihat atau gunakan link Publikasikan ke Web (CSV).');
+        }
         const parsed = Papa.parse(text, {skipEmptyLines:false}).data;
         if(parsed && parsed.length >= 2) return parsed;
       }
@@ -2250,6 +2256,10 @@ async function fetchCsv(url, timeoutMs){
       clearTimeout(timer);
       if(res.ok){
         const text = await res.text();
+        const trimmed = text.trim();
+        if(trimmed.startsWith('<!DOCTYPE html') || trimmed.startsWith('<html') || trimmed.startsWith('<?xml')){
+          throw new Error('Respons langsung berupa halaman web HTML, bukan data CSV.');
+        }
         return Papa.parse(text, {skipEmptyLines:false}).data;
       }
     }catch(err){
@@ -2272,7 +2282,7 @@ function diagnosticMessage(err){
   return err.message;
 }
 
-async function loadData(){
+async function loadData(forceRefresh = false){
   if(!MAIN_CSV_URL || !MAIN_CSV_URL.trim()){
     document.getElementById('content').innerHTML = `
       <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:60px 24px; text-align:center; max-width:680px; margin:40px auto; box-shadow:var(--card-shadow);">
@@ -2289,7 +2299,7 @@ async function loadData(){
   document.getElementById('content').innerHTML = '<div class="loading">MENGHUBUNGKAN KE SUMBER DATA...</div>';
   try{
     // 1) Muat data utama TERLEBIH DAHULU (jalur kritis) — ini yang menentukan tampil/tidaknya dashboard.
-    const mainRows = await fetchCsv(MAIN_CSV_URL);
+    const mainRows = await fetchCsv(MAIN_CSV_URL, 15000, forceRefresh);
 
     let monthCode = null, lastUpdateStr = null;
     for(const row of mainRows){
@@ -2390,7 +2400,7 @@ async function loadSupplementaryData(mainRowsSlice){
   renderAll();
 }
 
-document.getElementById('refreshBtn').addEventListener('click', loadData);
+document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
 loadData();
 setInterval(loadData, 5*60*1000);
 

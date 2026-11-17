@@ -750,6 +750,36 @@
         valKumul.textContent = kumulVal;
         if(footKumul) footKumul.textContent = kumulFoot || 'Diperbarui otomatis dari CSV';
       }
+
+      // Render tabel matriks KKU secara dinamis jika file spreadsheet memiliki struktur tabel multi-kolom (>= 4 kolom)
+      const tbMatriks = document.querySelector('#tab-matriks tbody');
+      const thMatriks = document.querySelector('#tab-matriks thead tr');
+      if (tbMatriks && thMatriks && rows[0].length >= 4) {
+        thMatriks.innerHTML = rows[0].map((col, idx) => {
+          const colName = (col || '').trim() || ('Kolom ' + (idx + 1));
+          const colLower = colName.toLowerCase();
+          const isRight = colLower.includes('target') || colLower.includes('realisasi') || colLower.includes('bobot') || colLower.includes('%') || colLower.includes('capaian');
+          return `<th ${isRight ? 'style="text-align:right;"' : ''}>${colName}</th>`;
+        }).join('');
+
+        const cleanRows = rows.slice(1).filter(r => r.some(c => c && c.toString().trim() !== ''));
+        tbMatriks.innerHTML = cleanRows.map(row => {
+          const cells = row.map(cell => {
+            const cStr = (cell || '').toString().trim();
+            const cLower = cStr.toLowerCase();
+            if (cLower === 'optimal' || cLower === 'on track' || cLower === 'selesai' || cLower === 'sempurna') {
+              return `<td><span class="status-pill status-closed">${cStr}</span></td>`;
+            } else if (cLower.includes('progress') || cLower.includes('waspada') || cLower.includes('tahap verifikasi')) {
+              return `<td><span class="status-pill status-progress">${cStr}</span></td>`;
+            } else if (cLower.includes('open') || cLower.includes('kritis') || cLower.includes('terlambat')) {
+              return `<td><span class="status-pill status-open">${cStr}</span></td>`;
+            }
+            const isNumOrPercent = /^[\d.,\s%+-]+$/.test(cStr) && cStr.length < 20;
+            return `<td ${isNumOrPercent ? 'style="text-align:right; font-weight:600;"' : ''}>${cStr || '-'}</td>`;
+          }).join('');
+          return `<tr>${cells}</tr>`;
+        }).join('');
+      }
     }catch(err){
       console.warn('Info: Menunggu sumber data KKU aktif:', err);
     }

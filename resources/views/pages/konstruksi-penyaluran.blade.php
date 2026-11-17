@@ -429,7 +429,7 @@
   <!-- TAB 1: DAFTAR PROYEK KONSTRUKSI -->
   <div id="tab-proyek" class="tab-pane active">
     <!-- INFO STATUS SUMBER DATA TERKUNCI -->
-    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:flex-start; gap:14px; box-shadow:var(--card-shadow);">
+    <div id="boxInfoMenungguSpreadsheet" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:flex-start; gap:14px; box-shadow:var(--card-shadow);">
       <div style="font-size:30px; line-height:1;">🔒</div>
       <div>
         <h4 style="font-size:14px; font-weight:700; color:var(--text-main); margin:0 0 4px;">Integrasi Rincian Spreadsheet Proyek Sedang Disiapkan</h4>
@@ -444,8 +444,8 @@
 
     <div class="kp-table-card">
       <div class="kp-table-header">
-        <h3>Tabel Monitoring Progres Pilar Utama Konstruksi, COD &amp; STO</h3>
-        <span style="font-size:12px; color:var(--text-muted);">Disinkronkan dari data Halaman Home &amp; Panel Admin</span>
+        <h3 id="txtTabelProyekJudul">Tabel Monitoring Progres Pilar Utama Konstruksi, COD &amp; STO</h3>
+        <span id="txtTabelProyekSub" style="font-size:12px; color:var(--text-muted);">Disinkronkan dari data Halaman Home &amp; Panel Admin</span>
       </div>
       <div class="table-responsive">
         <table class="kp-table">
@@ -727,6 +727,7 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
   function switchKpTab(tabId, btn){
     document.querySelectorAll('.kp-tab-btn').forEach(b => b.classList.remove('active'));
@@ -735,5 +736,80 @@
     const target = document.getElementById(tabId);
     if(target) target.classList.add('active');
   }
+
+  // DYNAMIC SPREADSHEET ENGINE UNTUK KONSTRUKSI & PENYALURAN
+  const KONSTRUKSI_CSV_URL = (window.APP_DATA_SOURCES && window.APP_DATA_SOURCES.konstruksi_penyaluran_csv) ? window.APP_DATA_SOURCES.konstruksi_penyaluran_csv : null;
+
+  async function loadDynamicKonstruksiTable(){
+    if(!KONSTRUKSI_CSV_URL || !KONSTRUKSI_CSV_URL.trim()) {
+      // Sumber data belum dihubungkan / mode terkunci: tetap tampilkan 3 pilar resmi bawaan
+      return;
+    }
+
+    try {
+      const proxyUrl = '/api/proxy-csv?url=' + encodeURIComponent(KONSTRUKSI_CSV_URL);
+      const res = await fetch(proxyUrl);
+      if(!res.ok) return;
+
+      const text = await res.text();
+      const parsed = Papa.parse(text, {skipEmptyLines: true});
+      const rows = parsed.data;
+
+      if(!rows || rows.length < 2) return;
+
+      // 1. Sembunyikan kotak pemberitahuan "Menunggu Spreadsheet"
+      const infoBox = document.getElementById('boxInfoMenungguSpreadsheet');
+      if(infoBox) infoBox.style.display = 'none';
+
+      // 2. Render Header Tabel (THEAD) secara dinamis otomatis mengikuti kolom spreadsheet
+      const theadTr = document.querySelector('.kp-table thead tr');
+      if(theadTr){
+        theadTr.innerHTML = rows[0].map((h, idx) => {
+          const colName = (h || '').trim() || ('Kolom ' + (idx + 1));
+          const colLower = colName.toLowerCase();
+          const isRight = colLower.includes('target') || colLower.includes('realisasi') || colLower.includes('bobot') || colLower.includes('%');
+          return `<th ${isRight ? 'style="text-align:right;"' : ''}>${colName}</th>`;
+        }).join('');
+      }
+
+      // 3. Render Baris Data (TBODY) secara dinamis otomatis mengikuti isi spreadsheet
+      const tbody = document.getElementById('proyek-tbody');
+      if(tbody){
+        const cleanRows = rows.slice(1).filter(r => r.some(c => c && c.toString().trim() !== ''));
+        tbody.innerHTML = cleanRows.map((row, rIdx) => {
+          const cellsHtml = row.map((cell, cIdx) => {
+            const cStr = (cell || '').toString().trim();
+            const cLower = cStr.toLowerCase();
+
+            // Status badges dinamis
+            if(cLower === 'on track' || cLower === 'selesai' || cLower === 'optimal' || cLower === 'aktif'){
+              return `<td><span class="status-pill status-ontrack">${cStr}</span></td>`;
+            } else if(cLower.includes('hati-hati') || cLower.includes('warning') || cLower.includes('tahap verifikasi') || cLower.includes('progress')){
+              return `<td><span class="status-pill status-caution">${cStr}</span></td>`;
+            } else if(cLower.includes('kritis') || cLower.includes('terkendala') || cLower.includes('terlambat')){
+              return `<td><span class="status-pill status-critical">${cStr}</span></td>`;
+            }
+
+            // Angka / Persentase rata kanan
+            const isNumOrPercent = /^[\d.,\s%+-]+$/.test(cStr) && cStr.length < 20;
+            return `<td ${isNumOrPercent ? 'style="text-align:right; font-weight:600;"' : ''}>${cStr || '-'}</td>`;
+          }).join('');
+
+          return `<tr>${cellsHtml}</tr>`;
+        }).join('');
+
+        // 4. Update judul & subtitle tabel
+        const txtJudul = document.getElementById('txtTabelProyekJudul');
+        if(txtJudul) txtJudul.textContent = 'Daftar Rincian Pekerjaan Proyek Konstruksi & Penyaluran';
+        const txtSub = document.getElementById('txtTabelProyekSub');
+        if(txtSub) txtSub.textContent = `Diperbarui otomatis secara live dari link spreadsheet (${cleanRows.length} baris data)`;
+      }
+
+    } catch(err) {
+      console.warn('[Konstruksi Dinamis] Menunggu spreadsheet aktif:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadDynamicKonstruksiTable);
 </script>
 @endsection

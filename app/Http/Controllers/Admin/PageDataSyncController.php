@@ -185,7 +185,8 @@ class PageDataSyncController extends Controller
                 } else {
                     $loadError = "File lokal '{$dataSource->file_path}' tidak ditemukan di server.";
                 }
-            } elseif ($dataSource->source_type === 'url' && $dataSource->url) {
+            } elseif (($dataSource->source_type === 'url' || empty($dataSource->source_type)) && ($dataSource->effective_url || $dataSource->url)) {
+                $targetUrl = $dataSource->effective_url ?: DataSource::normalizeGoogleUrl($dataSource->url ?? '');
                 $response = Http::withoutVerifying()
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -193,28 +194,13 @@ class PageDataSyncController extends Controller
                     ])
                     ->timeout(25)
                     ->retry(2, 500)
-                    ->get($dataSource->url);
+                    ->get($targetUrl);
 
                 if ($response->successful()) {
                     $rawText = $response->body();
                     $rawRows = $this->syncService->parseCsvContent($rawText);
                 } else {
                     $loadError = "Gagal mengambil data dari Google Sheet (HTTP {$response->status()}).";
-                }
-            } elseif ($dataSource->url) {
-                // Fallback jika source_type none tapi ada url
-                $response = Http::withoutVerifying()
-                    ->withHeaders([
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                        'Accept' => 'text/csv,text/plain,application/csv,*/*',
-                    ])
-                    ->timeout(20)
-                    ->retry(2, 500)
-                    ->get($dataSource->url);
-
-                if ($response->successful()) {
-                    $rawText = $response->body();
-                    $rawRows = $this->syncService->parseCsvContent($rawText);
                 }
             }
         } catch (\Throwable $e) {
@@ -405,7 +391,8 @@ class PageDataSyncController extends Controller
     {
         $dataSource = DataSource::where('key', $key)->firstOrFail();
 
-        if (empty($dataSource->url)) {
+        $targetUrl = $dataSource->effective_url ?: DataSource::normalizeGoogleUrl($dataSource->url ?? '');
+        if (empty($targetUrl)) {
             return back()->with('error', "Sumber data '{$dataSource->name}' belum memiliki URL Google Spreadsheet.");
         }
 
@@ -417,7 +404,7 @@ class PageDataSyncController extends Controller
                 ])
                 ->timeout(25)
                 ->retry(2, 500)
-                ->get($dataSource->url);
+                ->get($targetUrl);
             if (!$response->successful()) {
                 return back()->with('error', "Gagal menghubungi Google Spreadsheet: HTTP {$response->status()}");
             }
@@ -513,9 +500,10 @@ class PageDataSyncController extends Controller
             }
         }
 
-        if (empty($content) && $dataSource->url) {
+        $targetUrl = $dataSource->effective_url ?: DataSource::normalizeGoogleUrl($dataSource->url ?? '');
+        if (empty($content) && !empty($targetUrl)) {
             try {
-                $res = Http::withoutVerifying()->timeout(15)->get($dataSource->url);
+                $res = Http::withoutVerifying()->timeout(15)->get($targetUrl);
                 if ($res->successful()) {
                     $content = $res->body();
                 }

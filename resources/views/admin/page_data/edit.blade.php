@@ -1044,6 +1044,7 @@
     function getHeaderRowIndex() {
       if (DATA_KEY === 'anti_blackout_csv') return 3;
       if (DATA_KEY === 'common_enemy_csv') return 1;
+      if (DATA_KEY === 'nko_csv') return 8; // Baris 9 adalah baris header asli (NO, URAIAN, BOBOT, GAP POINT, dll.)
       return 0;
     }
 

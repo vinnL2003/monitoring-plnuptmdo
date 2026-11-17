@@ -37,6 +37,7 @@ class CsvSyncService
                 throw new \Exception("URL Google Sheet belum diisi untuk sumber data '{$dataSource->name}'.");
             }
 
+            $fetchUrl = DataSource::normalizeGoogleUrl($dataSource->url);
             $cacheKey = 'datasource_csv_cache_' . $dataSource->id;
 
             try {
@@ -48,7 +49,7 @@ class CsvSyncService
                     ])
                     ->timeout(25)
                     ->retry(3, 1000)
-                    ->get($dataSource->url);
+                    ->get($fetchUrl);
 
                 if (!$response->successful()) {
                     throw new \Exception("Gagal mengunduh CSV Google Sheet (HTTP {$response->status()}).");
@@ -332,7 +333,20 @@ class CsvSyncService
             $metricName = Str::lower($r[$colMetrikIdx] ?? '');
             if ($metricName === '') continue;
 
-            if (Str::contains($metricName, $normQuery) || Str::contains($normQuery, $metricName)) {
+            // Pencocokan cerdas metrik:
+            // 1. Sama persis (exact match)
+            // 2. Baris CSV mengandung query (misal: "Realisasi KKU Bulan Berjalan 2026", query: "Realisasi KKU Bulan Berjalan")
+            // 3. Query mengandung nama baris, HANYA bila nama baris spesifik (>= 8 karakter dan bukan kata umum seperti 'status', 'nilai', 'total')
+            $isMatch = false;
+            if ($metricName === $normQuery) {
+                $isMatch = true;
+            } elseif (Str::contains($metricName, $normQuery)) {
+                $isMatch = true;
+            } elseif (strlen($metricName) >= 8 && !in_array($metricName, ['realisasi', 'target', 'capaian', 'status', 'total', 'metrik', 'indikator', 'uraian']) && Str::contains($normQuery, $metricName)) {
+                $isMatch = true;
+            }
+
+            if ($isMatch) {
                 $val = $r[$colNilaiIdx] ?? null;
                 if ($val === null || $val === '') continue;
 

@@ -431,7 +431,9 @@ class WebController extends Controller
 
     public function proxyCsv(Request $request)
     {
-        $url = $request->query('url');
+        $rawUrl = (string) $request->query('url', '');
+        $url = DataSource::normalizeGoogleUrl($rawUrl);
+
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             return response('URL tidak valid', 400);
         }

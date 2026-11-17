@@ -1252,6 +1252,17 @@
       if(!rows || rows.length < 2) return;
 
       const headers = rows[0].map(h => (h||'').toString().trim().toLowerCase());
+      // Deteksi validasi: jika sumber data kku_csv tertukar dengan Kinerja Transmisi
+      const isTransmissionSheet = headers.some(h => 
+        h.includes('ttr') || h.includes('trip') || h.includes('gangguan') || 
+        h.includes('penyulang') || h.includes('gardu') || h.includes('trafo') || 
+        h.includes('bay') || h.includes('saidi') || h.includes('saifi')
+      );
+      if(isTransmissionSheet){
+        console.warn('[Home KKU] Tautan sumber data kku_csv terdeteksi data Kinerja Transmisi. Nilai kartu KKU dipertahankan dari database.');
+        return;
+      }
+
       let realisasiVal = null, tindakLanjutVal = null, kumulatifVal = null;
       let realisasiFoot = null, tindakLanjutFoot = null, kumulatifFoot = null;
 
@@ -1265,13 +1276,23 @@
           const val = (r[colNilaiIdx]||'').toString().trim();
           const note = (r[colNilaiIdx + 1]||'').toString().trim();
 
-          if(m.includes('realisasi')){
+          // 1. Realisasi KKU
+          if((m.includes('kku') && m.includes('realisasi')) || m === 'realisasi kku bulan berjalan' || m.includes('anggaran kku')){
             realisasiVal = val;
             if(note) realisasiFoot = note;
-          } else if(m.includes('tindak') || m.includes('status') || m.includes('tl')){
+          } else if(realisasiVal === null && m.startsWith('realisasi') && !m.includes('kpi') && !m.includes('pi') && !m.includes('transmisi') && !m.includes('trafo')){
+            realisasiVal = val;
+            if(note) realisasiFoot = note;
+          }
+
+          // 2. Status Tindak Lanjut
+          if(m.includes('tindak lanjut') || m.includes('rekomendasi') || m.includes('audit') || m.includes('spi') || m.includes('bpk') || m === 'status tindak lanjut'){
             tindakLanjutVal = val;
             if(note) tindakLanjutFoot = note;
-          } else if(m.includes('kumulatif') || m.includes('total') || m.includes('komulatif') || m.includes('tahunan')){
+          }
+
+          // 3. Capaian Kumulatif
+          if((m.includes('kumulatif') || m.includes('komulatif') || (m.includes('capaian') && m.includes('kku'))) && !m.includes('gangguan') && !m.includes('trip')){
             kumulatifVal = val;
             if(note) kumulatifFoot = note;
           }

@@ -689,6 +689,18 @@
       if(!rows || rows.length < 2) return;
 
       const headers = rows[0].map(h => (h||'').toString().trim().toLowerCase());
+
+      // Deteksi validasi: jika sumber data yang dimasukkan tampak milik Kinerja Transmisi (tertukar link)
+      const isTransmissionSheet = headers.some(h => 
+        h.includes('ttr') || h.includes('trip') || h.includes('gangguan') || 
+        h.includes('penyulang') || h.includes('gardu') || h.includes('trafo') || 
+        h.includes('bay') || h.includes('saidi') || h.includes('saifi')
+      );
+      if(isTransmissionSheet){
+        console.warn('[KKU] Tautan sumber data terdeteksi data Kinerja Transmisi (bukan KKU). Nilai kartu dipertahankan dari database.');
+        return;
+      }
+
       let realVal = null, tindakVal = null, kumulVal = null;
       let realFoot = null, tindakFoot = null, kumulFoot = null;
 
@@ -701,13 +713,23 @@
           const val = (r[colNilaiIdx]||'').toString().trim();
           const note = (r[colNilaiIdx + 1]||'').toString().trim();
 
-          if(m.includes('realisasi')){
+          // 1. Realisasi KKU: cocokkan spesifik 'kku' dan 'realisasi' (hindari realisasi teknis/kinerja lain)
+          if((m.includes('kku') && m.includes('realisasi')) || m === 'realisasi kku bulan berjalan' || m.includes('anggaran kku')){
             realVal = val;
             if(note) realFoot = note;
-          } else if(m.includes('tindak') || m.includes('status') || m.includes('tl')){
+          } else if(realVal === null && m.startsWith('realisasi') && !m.includes('kpi') && !m.includes('pi') && !m.includes('transmisi') && !m.includes('trafo')){
+            realVal = val;
+            if(note) realFoot = note;
+          }
+
+          // 2. Status Tindak Lanjut: cocokkan 'tindak lanjut' atau 'rekomendasi' (hindari kata 'status' umum)
+          if(m.includes('tindak lanjut') || m.includes('rekomendasi') || m.includes('audit') || m.includes('spi') || m.includes('bpk') || m === 'status tindak lanjut'){
             tindakVal = val;
             if(note) tindakFoot = note;
-          } else if(m.includes('kumulatif') || m.includes('total') || m.includes('komulatif')){
+          }
+
+          // 3. Capaian Kumulatif: cocokkan 'kumulatif' (hindari baris 'total' umum tabel)
+          if((m.includes('kumulatif') || m.includes('komulatif') || (m.includes('capaian') && m.includes('kku'))) && !m.includes('gangguan') && !m.includes('trip')){
             kumulVal = val;
             if(note) kumulFoot = note;
           }
